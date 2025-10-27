@@ -82,7 +82,7 @@ export function CampaignsView({ onNavigate }: CampaignsViewProps) {
   return (
     <>
       {/* Fixed Header */}
-      <div className="shrink-0 border-b bg-background px-6 py-4">
+      <div className="shrink-0 border-b bg-background px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between">
           <div>
             <h1>{t.campaignsTitle}</h1>
@@ -96,9 +96,9 @@ export function CampaignsView({ onNavigate }: CampaignsViewProps) {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
         <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="p-6">

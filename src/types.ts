@@ -65,3 +65,26 @@ export interface InviteMemberPayload {
 }
 
 export interface UpdateTeamMemberPayload extends Partial<Omit<TeamMember, 'id'>> {}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface SmtpTestPayload {
+  to: string;
+  subject?: string;
+  message?: string;
+}

@@ -3,28 +3,70 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const fsp = require('fs/promises');
-const { randomUUID } = require('crypto');
+const { randomUUID, scryptSync, timingSafeEqual, createHmac } = require('crypto');
+const { sendTestEmail, getSmtpStatus } = require('./email');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 const DB_PATH = path.join(__dirname, 'data', 'db.json');
 const BUILD_PATH = path.join(__dirname, '..', 'build');
+const JWT_SECRET = process.env.JWT_SECRET || 'phishlab-dev-secret';
+const TOKEN_EXPIRY_MS = 12 * 60 * 60 * 1000; // 12 hours
+const DEFAULT_ADMIN_PASSWORD_HASH =
+  '1ea3c2df21ea67caddefca19ac8a3fd6:de74239e331c11bb4a24c4a4f1b226ad7f48fa401e42329064586d01f3a50b7711c3b6c8da38ebcc40ce49708b60a148faa0212d3a9e0d52852c470bca9fc3c5';
+const DEFAULT_ADMIN_USER = {
+  id: 'admin-1',
+  email: 'admin@company.com',
+  name: 'Alex Rivera',
+  role: 'Admin',
+  passwordHash: DEFAULT_ADMIN_PASSWORD_HASH
+};
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
 function ensureDatabase() {
+  const seedData = {
+    campaigns: [],
+    templates: [],
+    recipients: [],
+    teamMembers: [],
+    users: [DEFAULT_ADMIN_USER]
+  };
+
   if (!fs.existsSync(DB_PATH)) {
-    const seedPath = path.join(__dirname, 'data', 'db.json');
-    const seedData = {
-      campaigns: [],
-      templates: [],
-      recipients: [],
-      teamMembers: []
-    };
     fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
-    fs.writeFileSync(seedPath, JSON.stringify(seedData, null, 2));
+    fs.writeFileSync(DB_PATH, JSON.stringify(seedData, null, 2));
+    return;
+  }
+
+  try {
+    const current = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+    let changed = false;
+
+    for (const key of ['campaigns', 'templates', 'recipients', 'teamMembers']) {
+      if (!Array.isArray(current[key])) {
+        current[key] = [];
+        changed = true;
+      }
+    }
+
+    if (!Array.isArray(current.users)) {
+      current.users = [DEFAULT_ADMIN_USER];
+      changed = true;
+    } else if (!current.users.some((user) => user.email === DEFAULT_ADMIN_USER.email)) {
+      current.users.push({ ...DEFAULT_ADMIN_USER });
+      changed = true;
+    }
+
+    if (changed) {
+      fs.writeFileSync(DB_PATH, JSON.stringify(current, null, 2));
+    }
+  } catch (error) {
+    console.error('Failed to read database, recreating seed file.', error);
+    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+    fs.writeFileSync(DB_PATH, JSON.stringify(seedData, null, 2));
   }
 }
 
@@ -36,6 +78,145 @@ async function readDb() {
 
 async function writeDb(data) {
   await fsp.writeFile(DB_PATH, JSON.stringify(data, null, 2));
+}
+
+function sanitizeUser(user) {
+  if (!user) {
+    return null;
+  }
+  const { passwordHash, ...safe } = user;
+  return safe;
+}
+
+function verifyPassword(password, storedHash) {
+  if (!storedHash) {
+    return false;
+  }
+
+  const [salt, key] = storedHash.split(':');
+  if (!salt || !key) {
+    return false;
+  }
+
+  const derived = scryptSync(password, salt, 64);
+  const keyBuffer = Buffer.from(key, 'hex');
+
+  if (derived.length !== keyBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(derived, keyBuffer);
+}
+
+function createToken(payload) {
+  const issuedAt = Date.now();
+  const body = {
+    ...payload,
+    iat: issuedAt,
+    exp: issuedAt + TOKEN_EXPIRY_MS,
+  };
+
+  const headerSegment = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const payloadSegment = Buffer.from(JSON.stringify(body)).toString('base64url');
+  const signature = createHmac('sha256', JWT_SECRET)
+    .update(`${headerSegment}.${payloadSegment}`)
+    .digest('base64url');
+
+  return `${headerSegment}.${payloadSegment}.${signature}`;
+}
+
+function verifyToken(token) {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Invalid token format');
+  }
+
+  const [headerSegment, payloadSegment, signature] = parts;
+  const expectedSignature = createHmac('sha256', JWT_SECRET)
+    .update(`${headerSegment}.${payloadSegment}`)
+    .digest('base64url');
+
+  const signatureBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expectedSignature);
+
+  if (signatureBuffer.length !== expectedBuffer.length || !timingSafeEqual(signatureBuffer, expectedBuffer)) {
+    throw new Error('Invalid token signature');
+  }
+
+  const payload = JSON.parse(Buffer.from(payloadSegment, 'base64url').toString('utf-8'));
+  if (payload.exp && Date.now() > payload.exp) {
+    throw new Error('Token expired');
+  }
+
+  return payload;
+}
+
+async function authenticateRequest(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
+    const error = new Error('Missing authorization header');
+    error.status = 401;
+    throw error;
+  }
+
+  const token = authHeader.slice(7).trim();
+  let payload;
+
+  try {
+    payload = verifyToken(token);
+  } catch (error) {
+    const authError = new Error('Invalid or expired token');
+    authError.status = 401;
+    throw authError;
+  }
+
+  const db = await readDb();
+  const user = db.users?.find((item) => item.id === payload.sub);
+
+  if (!user) {
+    const authError = new Error('User not found');
+    authError.status = 401;
+    throw authError;
+  }
+
+  return sanitizeUser(user);
+}
+
+async function authenticate(req, res, next) {
+  try {
+    const user = await authenticateRequest(req);
+    req.user = user;
+    next();
+  } catch (error) {
+    const status = error.status || 401;
+    res.status(status).json({ message: error.message || 'Unauthorized' });
+  }
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user || (!roles.includes(req.user.role) && !roles.includes('*'))) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    next();
+  };
+}
+
+function syncUserWithTeam(db, updatedMember) {
+  if (!db.users || !updatedMember) {
+    return;
+  }
+  const userIndex = db.users.findIndex(
+    (user) => user.id === updatedMember.id || user.email.toLowerCase() === updatedMember.email.toLowerCase()
+  );
+  if (userIndex !== -1) {
+    db.users[userIndex] = {
+      ...db.users[userIndex],
+      email: updatedMember.email,
+      name: updatedMember.name,
+      role: updatedMember.role,
+    };
+  }
 }
 
 function mapCampaignPayload(payload, templateName) {
@@ -63,7 +244,68 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/templates', async (_req, res, next) => {
+app.post('/api/auth/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'email and password are required' });
+    }
+
+    const db = await readDb();
+    const user = db.users?.find((item) => item.email.toLowerCase() === email.toLowerCase());
+
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const token = createToken({
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+    });
+
+    res.json({
+      token,
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/auth/me', authenticate, async (req, res) => {
+  res.json(req.user);
+});
+
+app.get('/api/email/status', authenticate, requireRole('Admin'), (_req, res) => {
+  res.json(getSmtpStatus());
+});
+
+app.post('/api/email/test', authenticate, requireRole('Admin'), async (req, res) => {
+  try {
+    const { to, subject, message } = req.body || {};
+    if (!to) {
+      return res.status(400).json({ message: 'Recipient email address (to) is required' });
+    }
+
+    const info = await sendTestEmail({ to, subject, message });
+    res.json({
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response,
+    });
+  } catch (error) {
+    console.error('SMTP test failed', error);
+    const message = error instanceof Error ? error.message : 'Failed to send test email';
+    const status = /environment variable|Recipient email address/.test(message) ? 400 : 502;
+    res.status(status).json({ message });
+  }
+});
+
+app.get('/api/templates', authenticate, async (_req, res, next) => {
   try {
     const db = await readDb();
     res.json(db.templates);
@@ -72,7 +314,7 @@ app.get('/api/templates', async (_req, res, next) => {
   }
 });
 
-app.get('/api/templates/:id', async (req, res, next) => {
+app.get('/api/templates/:id', authenticate, async (req, res, next) => {
   try {
     const db = await readDb();
     const template = db.templates.find((item) => item.id === req.params.id);
@@ -85,7 +327,7 @@ app.get('/api/templates/:id', async (req, res, next) => {
   }
 });
 
-app.get('/api/campaigns', async (_req, res, next) => {
+app.get('/api/campaigns', authenticate, async (_req, res, next) => {
   try {
     const db = await readDb();
     res.json(db.campaigns);
@@ -94,7 +336,7 @@ app.get('/api/campaigns', async (_req, res, next) => {
   }
 });
 
-app.post('/api/campaigns', async (req, res, next) => {
+app.post('/api/campaigns', authenticate, requireRole('Admin', 'Manager'), async (req, res, next) => {
   try {
     const { name, templateId, recipientCount } = req.body;
     if (!name || !templateId || !recipientCount) {
@@ -117,7 +359,7 @@ app.post('/api/campaigns', async (req, res, next) => {
   }
 });
 
-app.put('/api/campaigns/:id', async (req, res, next) => {
+app.put('/api/campaigns/:id', authenticate, requireRole('Admin', 'Manager'), async (req, res, next) => {
   try {
     const db = await readDb();
     const idx = db.campaigns.findIndex((item) => item.id === req.params.id);
@@ -136,7 +378,7 @@ app.put('/api/campaigns/:id', async (req, res, next) => {
   }
 });
 
-app.delete('/api/campaigns/:id', async (req, res, next) => {
+app.delete('/api/campaigns/:id', authenticate, requireRole('Admin'), async (req, res, next) => {
   try {
     const db = await readDb();
     const nextCampaigns = db.campaigns.filter((item) => item.id !== req.params.id);
@@ -152,7 +394,7 @@ app.delete('/api/campaigns/:id', async (req, res, next) => {
   }
 });
 
-app.get('/api/recipients', async (_req, res, next) => {
+app.get('/api/recipients', authenticate, async (_req, res, next) => {
   try {
     const db = await readDb();
     res.json(db.recipients);
@@ -161,7 +403,7 @@ app.get('/api/recipients', async (_req, res, next) => {
   }
 });
 
-app.get('/api/team', async (_req, res, next) => {
+app.get('/api/team', authenticate, async (_req, res, next) => {
   try {
     const db = await readDb();
     res.json(db.teamMembers);
@@ -170,7 +412,7 @@ app.get('/api/team', async (_req, res, next) => {
   }
 });
 
-app.post('/api/team', async (req, res, next) => {
+app.post('/api/team', authenticate, requireRole('Admin'), async (req, res, next) => {
   try {
     const { email, role, name } = req.body;
     if (!email || !role) {
@@ -203,7 +445,7 @@ app.post('/api/team', async (req, res, next) => {
   }
 });
 
-app.put('/api/team/:id', async (req, res, next) => {
+app.put('/api/team/:id', authenticate, requireRole('Admin'), async (req, res, next) => {
   try {
     const db = await readDb();
     const index = db.teamMembers.findIndex((item) => item.id === req.params.id);
@@ -214,6 +456,7 @@ app.put('/api/team/:id', async (req, res, next) => {
     const existing = db.teamMembers[index];
     const updated = { ...existing, ...req.body, id: existing.id };
     db.teamMembers[index] = updated;
+    syncUserWithTeam(db, updated);
     await writeDb(db);
 
     res.json(updated);
@@ -222,7 +465,7 @@ app.put('/api/team/:id', async (req, res, next) => {
   }
 });
 
-app.delete('/api/team/:id', async (req, res, next) => {
+app.delete('/api/team/:id', authenticate, requireRole('Admin'), async (req, res, next) => {
   try {
     const db = await readDb();
     const nextMembers = db.teamMembers.filter((item) => item.id !== req.params.id);
@@ -238,7 +481,7 @@ app.delete('/api/team/:id', async (req, res, next) => {
   }
 });
 
-app.get('/api/stats', async (_req, res, next) => {
+app.get('/api/stats', authenticate, async (_req, res, next) => {
   try {
     const db = await readDb();
     const totalRecipients = db.campaigns.reduce((sum, campaign) => sum + (campaign.recipients || 0), 0);

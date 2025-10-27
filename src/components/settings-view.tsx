@@ -1,20 +1,25 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { 
-  Mail, 
-  Globe, 
-  Bell, 
+import {
+  Mail,
+  Globe,
+  Bell,
   Shield,
   Database,
-  Users
+  Users,
+  Send,
 } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { LdapSettings } from "./ldap-settings";
 import { useTranslation } from "../lib/i18n";
+import { apiClient } from "../lib/api-client";
+import { toast } from "sonner@2.0.3";
+import { Textarea } from "./ui/textarea";
 
 interface SettingsViewProps {
   onNavigate: (view: string) => void;
@@ -22,13 +27,57 @@ interface SettingsViewProps {
 
 export function SettingsView({ onNavigate }: SettingsViewProps) {
   const { t } = useTranslation();
-  
+  const [smtpStatus, setSmtpStatus] = useState<{ configured: boolean; reason?: string; host?: string; from?: string; secure?: boolean; hasAuth?: boolean } | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [testEmail, setTestEmail] = useState('');
+  const [testSubject, setTestSubject] = useState('PhishLab SMTP Test');
+  const [testMessage, setTestMessage] = useState('This is a test email from PhishLab.');
+  const [sendingTest, setSendingTest] = useState(false);
+
+  const loadStatus = async () => {
+    try {
+      setStatusLoading(true);
+      const status = await apiClient.getEmailStatus();
+      setSmtpStatus(status);
+      if (status?.from) {
+        setTestEmail(status.from);
+      }
+    } catch (error) {
+      console.error(error);
+      setSmtpStatus({ configured: false, reason: error instanceof Error ? error.message : 'Unable to load SMTP status' });
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadStatus();
+  }, []);
+
+  const handleSendTestEmail = async () => {
+    if (!testEmail) {
+      toast.error('Enter recipient email address');
+      return;
+    }
+    try {
+      setSendingTest(true);
+      const result = await apiClient.sendTestEmail({ to: testEmail, subject: testSubject, message: testMessage });
+      toast.success(`Test email sent (message ID: ${result?.messageId || 'n/a'})`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to send test email');
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1>{t.settingsTitle}</h1>
-        <p className="text-muted-foreground">{t.settingsSubtitle}</p>
-      </div>
+    <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+      <div className="space-y-6">
+        <div>
+          <h1>{t.settingsTitle}</h1>
+          <p className="text-muted-foreground">{t.settingsSubtitle}</p>
+        </div>
 
       <Tabs defaultValue="smtp" className="space-y-6">
         <TabsList>
@@ -107,19 +156,76 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
 
               <Separator />
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Test Configuration</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Send a test email to verify your SMTP settings
-                  </p>
-                </div>
-                <Button variant="outline">Send Test</Button>
-              </div>
-
               <div className="flex justify-end gap-2">
                 <Button variant="outline">Cancel</Button>
                 <Button>Save Changes</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>SMTP Status & Test</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg border bg-muted/40 p-4 text-sm">
+                {statusLoading ? (
+                  <p>Checking SMTP configuration…</p>
+                ) : smtpStatus?.configured ? (
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground">SMTP configured</p>
+                    <p className="text-muted-foreground">Host: {smtpStatus.host}</p>
+                    <p className="text-muted-foreground">From: {smtpStatus.from}</p>
+                    <p className="text-muted-foreground">Secure: {smtpStatus.secure ? 'Yes' : 'No'}</p>
+                    <p className="text-muted-foreground">Auth: {smtpStatus.hasAuth ? 'Username & password set' : 'No authentication (open relay)'}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="font-medium text-destructive">SMTP not configured</p>
+                    <p className="text-muted-foreground">{smtpStatus?.reason || 'Missing environment variables. Update your deployment to include SMTP credentials.'}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="test-to">Recipient</Label>
+                  <Input
+                    id="test-to"
+                    type="email"
+                    value={testEmail}
+                    onChange={(event) => setTestEmail(event.target.value)}
+                    placeholder="admin@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="test-subject">Subject</Label>
+                  <Input
+                    id="test-subject"
+                    value={testSubject}
+                    onChange={(event) => setTestSubject(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="test-message">Message</Label>
+                <Textarea
+                  id="test-message"
+                  value={testMessage}
+                  onChange={(event) => setTestMessage(event.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" onClick={() => void handleSendTestEmail()} disabled={sendingTest}>
+                  <Send className="mr-2 size-4" />
+                  {sendingTest ? 'Sending…' : 'Send Test Email'}
+                </Button>
+                <Button variant="outline" type="button" onClick={() => void loadStatus()} disabled={statusLoading}>
+                  Refresh Status
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -313,6 +419,7 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

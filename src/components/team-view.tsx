@@ -50,6 +50,7 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { useAppData } from "../lib/app-data-context";
+import { useAuth } from "../lib/auth-context";
 import type { TeamMember } from "../types";
 
 const roles = [
@@ -92,6 +93,8 @@ export function TeamView({ onNavigate }: TeamViewProps) {
     deleteTeamMember,
     loading,
   } = useAppData();
+  const { user } = useAuth();
+  const canManage = user?.role === "Admin";
   const [searchQuery, setSearchQuery] = useState("");
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -113,13 +116,26 @@ export function TeamView({ onNavigate }: TeamViewProps) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  const notifyReadOnly = () => {
+    toast.error(t.teamAdminOnly);
+  };
+
   const handleEditMember = (member: TeamMember) => {
+    if (!canManage) {
+      notifyReadOnly();
+      return;
+    }
     setEditingMember({ ...member });
     setEditDialogOpen(true);
   };
 
   const handleSaveEdit = async () => {
     if (!editingMember) {
+      return;
+    }
+
+    if (!canManage) {
+      notifyReadOnly();
       return;
     }
     
@@ -146,12 +162,21 @@ export function TeamView({ onNavigate }: TeamViewProps) {
   };
 
   const handleDeleteMember = (member: TeamMember) => {
+    if (!canManage) {
+      notifyReadOnly();
+      return;
+    }
     setDeletingMember(member);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
     if (!deletingMember) {
+      return;
+    }
+
+    if (!canManage) {
+      notifyReadOnly();
       return;
     }
 
@@ -167,6 +192,11 @@ export function TeamView({ onNavigate }: TeamViewProps) {
   };
 
   const handleInvite = async () => {
+    if (!canManage) {
+      notifyReadOnly();
+      return;
+    }
+
     if (!newMemberEmail) {
       toast.error('Please enter an email address');
       return;
@@ -194,21 +224,28 @@ export function TeamView({ onNavigate }: TeamViewProps) {
   return (
     <>
       {/* Fixed Header */}
-      <div className="shrink-0 border-b bg-background px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="shrink-0 border-b bg-background px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h1>{t.teamTitle}</h1>
             <p className="text-muted-foreground">{t.teamSubtitle}</p>
           </div>
-          <Button onClick={() => setInviteDialogOpen(true)}>
+          <Button
+            onClick={() => setInviteDialogOpen(true)}
+            disabled={!canManage}
+            title={!canManage ? t.teamAdminOnly : undefined}
+          >
             <UserPlus className="mr-2 size-4" />
             {t.inviteMember}
           </Button>
         </div>
+        {!canManage && (
+          <p className="mt-3 text-xs text-muted-foreground">{t.teamAdminOnly}</p>
+        )}
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {roles.map((role) => (
@@ -315,6 +352,7 @@ export function TeamView({ onNavigate }: TeamViewProps) {
                               size="icon"
                               onClick={() => handleEditMember(member)}
                               className="size-8"
+                              disabled={!canManage}
                             >
                               <Edit2 className="size-4" />
                             </Button>
@@ -323,6 +361,7 @@ export function TeamView({ onNavigate }: TeamViewProps) {
                               size="icon"
                               onClick={() => handleDeleteMember(member)}
                               className="size-8"
+                              disabled={!canManage}
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -422,6 +461,7 @@ export function TeamView({ onNavigate }: TeamViewProps) {
                 <Select
                   value={editingMember.role}
                   onValueChange={(value) => setEditingMember({ ...editingMember, role: value })}
+                  disabled={!canManage}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -462,7 +502,7 @@ export function TeamView({ onNavigate }: TeamViewProps) {
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit}>
+            <Button onClick={handleSaveEdit} disabled={!canManage}>
               Save Changes
             </Button>
           </DialogFooter>
@@ -518,10 +558,13 @@ export function TeamView({ onNavigate }: TeamViewProps) {
             <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
               Close
             </Button>
-            <Button onClick={() => {
+            <Button
+              onClick={() => {
               setViewDialogOpen(false);
               if (viewingMember) handleEditMember(viewingMember);
-            }}>
+            }}
+              disabled={!canManage}
+            >
               <Edit2 className="mr-2 size-4" />
               Edit Role
             </Button>
@@ -541,7 +584,11 @@ export function TeamView({ onNavigate }: TeamViewProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={!canManage}
+            >
               Remove Member
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -571,7 +618,7 @@ export function TeamView({ onNavigate }: TeamViewProps) {
 
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+              <Select value={newMemberRole} onValueChange={setNewMemberRole} disabled={!canManage}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -608,7 +655,7 @@ export function TeamView({ onNavigate }: TeamViewProps) {
             <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleInvite}>
+            <Button onClick={handleInvite} disabled={!canManage}>
               <UserPlus className="mr-2 size-4" />
               Send Invitation
             </Button>

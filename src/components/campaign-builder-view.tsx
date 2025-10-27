@@ -96,11 +96,12 @@ export function CampaignBuilderView({ onNavigate }: CampaignBuilderViewProps) {
   const selectedTemplateData = templates.find(t => t.id === selectedTemplate);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1>Create Campaign</h1>
-        <p className="text-muted-foreground">Set up a new phishing simulation campaign in 4 steps</p>
-      </div>
+    <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+      <div className="space-y-6">
+        <div>
+          <h1>Create Campaign</h1>
+          <p className="text-muted-foreground">Set up a new phishing simulation campaign in 4 steps</p>
+        </div>
 
       {/* Progress Steps */}
       <div className="flex items-center justify-between">
@@ -458,29 +459,31 @@ export function CampaignBuilderView({ onNavigate }: CampaignBuilderViewProps) {
       </Card>
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Button
           variant="outline"
           onClick={handleBack}
           disabled={step === 1}
+          className="sm:w-auto"
         >
           <ChevronLeft className="mr-2 size-4" />
           Back
         </Button>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="ghost"
             onClick={() => onNavigate('campaigns')}
+            className="sm:w-auto"
           >
             Cancel
           </Button>
           {step < 4 ? (
-            <Button onClick={handleNext} disabled={!canProceed()}>
+            <Button onClick={handleNext} disabled={!canProceed()} className="sm:w-auto">
               Next
               <ChevronRight className="ml-2 size-4" />
             </Button>
           ) : (
-            <Button onClick={handleFinish} disabled={!canProceed() || isSubmitting}>
+            <Button onClick={handleFinish} disabled={!canProceed() || isSubmitting} className="sm:w-auto">
               <CheckCircle2 className="mr-2 size-4" />
               {isSubmitting ? 'Launching...' : 'Launch Campaign'}
             </Button>
@@ -488,5 +491,6 @@ export function CampaignBuilderView({ onNavigate }: CampaignBuilderViewProps) {
         </div>
       </div>
     </div>
+  </div>
   );
 }

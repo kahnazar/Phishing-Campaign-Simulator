@@ -71,7 +71,7 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
   return (
     <>
       {/* Fixed Header */}
-      <div className="shrink-0 border-b bg-background px-6 py-4">
+      <div className="shrink-0 border-b bg-background px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between">
           <div>
             <h1>{t.reportsTitle}</h1>
@@ -85,10 +85,10 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
         <div className="space-y-6">
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
           <Card key={metric.label}>
             <CardContent className="p-6">
@@ -132,86 +132,88 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
               Loading campaign performance...
             </div>
           ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Campaign</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Recipients</TableHead>
-                <TableHead>Open Rate</TableHead>
-                <TableHead>Click Rate</TableHead>
-                <TableHead>Submit Rate</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {campaigns.map((campaign) => {
-                const openRate = campaign.sent > 0 
-                  ? ((campaign.opened / campaign.sent) * 100).toFixed(0) 
-                  : '0';
-                const clickRate = campaign.sent > 0 
-                  ? ((campaign.clicked / campaign.sent) * 100).toFixed(0) 
-                  : '0';
-                const submitRate = campaign.sent > 0 
-                  ? ((campaign.submitted / campaign.sent) * 100).toFixed(0) 
-                  : '0';
+          <div className="overflow-x-auto">
+            <Table className="min-w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.campaigns}</TableHead>
+                  <TableHead>{t.status}</TableHead>
+                  <TableHead>{t.recipients}</TableHead>
+                  <TableHead>{t.openRate}</TableHead>
+                  <TableHead>{t.clickRate}</TableHead>
+                  <TableHead>{t.dataSubmissions}</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campaigns.map((campaign) => {
+                  const openRate = campaign.sent > 0 
+                    ? ((campaign.opened / campaign.sent) * 100).toFixed(0) 
+                    : '0';
+                  const clickRate = campaign.sent > 0 
+                    ? ((campaign.clicked / campaign.sent) * 100).toFixed(0) 
+                    : '0';
+                  const submitRate = campaign.sent > 0 
+                    ? ((campaign.submitted / campaign.sent) * 100).toFixed(0) 
+                    : '0';
 
-                return (
-                  <TableRow key={campaign.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{campaign.name}</p>
-                        <p className="text-sm text-muted-foreground">{campaign.template}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="outline"
-                        className={
-                          campaign.status === 'running' ? 'bg-green-100 text-green-700' :
-                          campaign.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                          campaign.status === 'scheduled' ? 'bg-purple-100 text-purple-700' :
-                          'bg-gray-100 text-gray-700'
-                        }
-                      >
-                        {campaign.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{campaign.recipients}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{openRate}%</span>
+                  return (
+                    <TableRow key={campaign.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{campaign.name}</p>
+                          <p className="text-sm text-muted-foreground">{campaign.template}</p>
                         </div>
-                        <Progress value={parseInt(openRate)} className="h-1.5" />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{clickRate}%</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="outline"
+                          className={
+                            campaign.status === 'running' ? 'bg-green-100 text-green-700' :
+                            campaign.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                            campaign.status === 'scheduled' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-700'
+                          }
+                        >
+                          {campaign.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{campaign.recipients}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>{openRate}%</span>
+                          </div>
+                          <Progress value={parseInt(openRate)} className="h-1.5" />
                         </div>
-                        <Progress value={parseInt(clickRate)} className="h-1.5" />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{submitRate}%</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>{clickRate}%</span>
+                          </div>
+                          <Progress value={parseInt(clickRate)} className="h-1.5" />
                         </div>
-                        <Progress value={parseInt(submitRate)} className="h-1.5" />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span>{submitRate}%</span>
+                          </div>
+                          <Progress value={parseInt(submitRate)} className="h-1.5" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm">
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
           )}
         </CardContent>
       </Card>

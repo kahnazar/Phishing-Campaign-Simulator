@@ -62,7 +62,11 @@
       "name": "Password Reset",
       "description": "Corporate password change notification",
       "category": "HR",
-      "tags": ["password", "security", "urgent"],
+      "tags": [
+        "password",
+        "security",
+        "urgent"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80",
       "subject": "Password Reset Required",
@@ -73,7 +77,11 @@
       "name": "Ticket Update",
       "description": "IT support ticket status notification",
       "category": "IT",
-      "tags": ["support", "helpdesk", "update"],
+      "tags": [
+        "support",
+        "helpdesk",
+        "update"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80",
       "subject": "Your Support Ticket #12345 Has Been Updated",
@@ -84,7 +92,11 @@
       "name": "Invoice Attached",
       "description": "Payment or invoice notification",
       "category": "Finance",
-      "tags": ["invoice", "payment", "billing"],
+      "tags": [
+        "invoice",
+        "payment",
+        "billing"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80",
       "subject": "Invoice #INV-2025-1234 Attached",
@@ -95,7 +107,11 @@
       "name": "Package Awaiting",
       "description": "Delivery notification",
       "category": "Delivery",
-      "tags": ["shipping", "package", "delivery"],
+      "tags": [
+        "shipping",
+        "package",
+        "delivery"
+      ],
       "variant": "casual",
       "thumbnailUrl": "https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?w=800&q=80",
       "subject": "Package Awaiting Pickup",
@@ -106,7 +122,11 @@
       "name": "Urgent CEO Request",
       "description": "Executive urgent request",
       "category": "Executive",
-      "tags": ["urgent", "executive", "priority"],
+      "tags": [
+        "urgent",
+        "executive",
+        "priority"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&q=80",
       "subject": "Urgent: Action Required",
@@ -117,7 +137,11 @@
       "name": "Open Enrollment",
       "description": "Benefits enrollment invitation",
       "category": "Benefits",
-      "tags": ["benefits", "hr", "enrollment"],
+      "tags": [
+        "benefits",
+        "hr",
+        "enrollment"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80",
       "subject": "Benefits Open Enrollment Period",
@@ -128,7 +152,11 @@
       "name": "Meeting Invitation",
       "description": "Zoom/Teams meeting invite",
       "category": "Calendar",
-      "tags": ["meeting", "zoom", "calendar"],
+      "tags": [
+        "meeting",
+        "zoom",
+        "calendar"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80",
       "subject": "Meeting Invitation: Q4 Review",
@@ -139,7 +167,11 @@
       "name": "Billing Alert",
       "description": "Cloud service billing notification",
       "category": "Cloud",
-      "tags": ["billing", "cloud", "payment"],
+      "tags": [
+        "billing",
+        "cloud",
+        "payment"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
       "subject": "Cloud Services: Payment Method Update Required",
@@ -150,7 +182,11 @@
       "name": "New Contract",
       "description": "Vendor contract document",
       "category": "Vendor",
-      "tags": ["contract", "legal", "vendor"],
+      "tags": [
+        "contract",
+        "legal",
+        "vendor"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80",
       "subject": "New Vendor Agreement for Review",
@@ -161,7 +197,11 @@
       "name": "MFA Enrollment",
       "description": "Multi-factor authentication setup",
       "category": "Security",
-      "tags": ["security", "mfa", "2fa"],
+      "tags": [
+        "security",
+        "mfa",
+        "2fa"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&q=80",
       "subject": "Enable Two-Factor Authentication",
@@ -172,7 +212,11 @@
       "name": "Password Expiry",
       "description": "Password expiration reminder",
       "category": "Helpdesk",
-      "tags": ["password", "expiry", "reminder"],
+      "tags": [
+        "password",
+        "expiry",
+        "reminder"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80",
       "subject": "Password Expires in 3 Days",
@@ -183,7 +227,11 @@
       "name": "LinkedIn Message",
       "description": "Professional network message",
       "category": "Social",
-      "tags": ["linkedin", "social", "networking"],
+      "tags": [
+        "linkedin",
+        "social",
+        "networking"
+      ],
       "variant": "casual",
       "thumbnailUrl": "https://images.unsplash.com/photo-1611944212129-29977ae1398c?w=800&q=80",
       "subject": "New Connection Request",
@@ -194,7 +242,11 @@
       "name": "Quick Survey",
       "description": "Employee feedback survey",
       "category": "Survey",
-      "tags": ["survey", "feedback", "hr"],
+      "tags": [
+        "survey",
+        "feedback",
+        "hr"
+      ],
       "variant": "casual",
       "thumbnailUrl": "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=800&q=80",
       "subject": "Quick Employee Satisfaction Survey",
@@ -205,7 +257,11 @@
       "name": "Limited Offer",
       "description": "Marketing promotion test",
       "category": "Promotion",
-      "tags": ["marketing", "offer", "sale"],
+      "tags": [
+        "marketing",
+        "offer",
+        "sale"
+      ],
       "variant": "casual",
       "thumbnailUrl": "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=800&q=80",
       "subject": "Exclusive Offer Just for You",
@@ -216,7 +272,11 @@
       "name": "Mandatory Course",
       "description": "Training course invitation",
       "category": "Training",
-      "tags": ["training", "course", "learning"],
+      "tags": [
+        "training",
+        "course",
+        "learning"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80",
       "subject": "Complete Required Security Training",
@@ -227,7 +287,11 @@
       "name": "Refund Processed",
       "description": "Refund confirmation",
       "category": "Shipping",
-      "tags": ["refund", "payment", "customer"],
+      "tags": [
+        "refund",
+        "payment",
+        "customer"
+      ],
       "variant": "casual",
       "thumbnailUrl": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
       "subject": "Your Refund Has Been Processed",
@@ -238,7 +302,11 @@
       "name": "Suspicious Login",
       "description": "Security alert notification",
       "category": "IT Alert",
-      "tags": ["security", "alert", "login"],
+      "tags": [
+        "security",
+        "alert",
+        "login"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80",
       "subject": "Unusual Sign-in Activity Detected",
@@ -249,7 +317,11 @@
       "name": "Welcome Pack",
       "description": "New employee onboarding",
       "category": "Onboarding",
-      "tags": ["onboarding", "welcome", "hr"],
+      "tags": [
+        "onboarding",
+        "welcome",
+        "hr"
+      ],
       "variant": "casual",
       "thumbnailUrl": "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80",
       "subject": "Welcome to the Team!",
@@ -260,7 +332,11 @@
       "name": "Policy Update",
       "description": "Company policy change notification",
       "category": "Calendar",
-      "tags": ["policy", "compliance", "update"],
+      "tags": [
+        "policy",
+        "compliance",
+        "update"
+      ],
       "variant": "corporate",
       "thumbnailUrl": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80",
       "subject": "Important Policy Update",
@@ -271,7 +347,11 @@
       "name": "Webinar Registration",
       "description": "Event registration confirmation",
       "category": "Event",
-      "tags": ["webinar", "event", "registration"],
+      "tags": [
+        "webinar",
+        "event",
+        "registration"
+      ],
       "variant": "casual",
       "thumbnailUrl": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
       "subject": "You are Registered for Our Webinar",
@@ -392,6 +472,15 @@
       "role": "Auditor",
       "campaigns": 0,
       "lastActive": "5 hours ago"
+    }
+  ],
+  "users": [
+    {
+      "id": "admin-1",
+      "email": "admin@company.com",
+      "name": "Alex Rivera",
+      "role": "Admin",
+      "passwordHash": "1ea3c2df21ea67caddefca19ac8a3fd6:de74239e331c11bb4a24c4a4f1b226ad7f48fa401e42329064586d01f3a50b7711c3b6c8da38ebcc40ce49708b60a148faa0212d3a9e0d52852c470bca9fc3c5"
     }
   ]
 }

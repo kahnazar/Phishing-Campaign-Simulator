@@ -88,7 +88,7 @@ export function TemplatesView({ onNavigate }: TemplatesViewProps) {
   return (
     <>
       {/* Fixed Header */}
-      <div className="shrink-0 border-b bg-background px-6 py-4 space-y-4">
+      <div className="shrink-0 border-b bg-background px-4 py-4 sm:px-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h1>{t.templatesTitle}</h1>
@@ -143,8 +143,8 @@ export function TemplatesView({ onNavigate }: TemplatesViewProps) {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         {loading && templates.length === 0 && (
           <div className="col-span-full flex items-center justify-center rounded-lg border border-dashed py-16 text-sm text-muted-foreground">
             Loading templates...

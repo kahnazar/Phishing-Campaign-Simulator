@@ -48,6 +48,28 @@ npm run build        # bundles the React app into /build
 npm start            # serves the API and the compiled frontend
 ```
 
+## Authentication
+- Default admin credentials: `admin@company.com` / `admin123`.
+- Tokens are HMAC-signed using `JWT_SECRET` (defaults to `phishlab-dev-secret`). Override it when running the app: `JWT_SECRET=change-me npm start` or `docker run -e JWT_SECRET=change-me …`.
+- Rotate the admin password by replacing the `passwordHash` field for user `admin-1` in `server/data/db.json`. Generate a fresh hash with Node:
+  ```bash
+  node -e "const { randomBytes, scryptSync } = require('crypto'); const salt = randomBytes(16).toString('hex'); const hash = scryptSync('newStrongPassword', salt, 64).toString('hex'); console.log(`${salt}:${hash}`);"
+  ```
+- Only administrators can invite, edit, or remove members in **Team & Roles**; other roles have read-only access.
+
+- **Рабочая SMTP-интеграция:** задействуется через Nodemailer; тестовое письмо можно отправить с вкладки Settings → SMTP.
+- **Переменные окружения** (обязательные): `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`. Если требуется авторизация — добавьте `SMTP_USER` и `SMTP_PASS`. Опция `SMTP_SECURE=true` включает TLS.
+- **API**: `GET /api/email/status` возвращает конфигурацию, `POST /api/email/test` (админ) отправляет тестовый email.
+- **Гайд по настройке:** см. [`src/documentation/EMAIL_SETUP.md`](src/documentation/EMAIL_SETUP.md) — включает чек-лист по безопасному хранению секретов и добавлению SMTP в докер.
+- При сборке контейнера пробрасывайте секреты: `docker run -e SMTP_HOST=smtp.example.com -e SMTP_USER=... -e SMTP_PASS=... -e SMTP_FROM=noreply@example.com …`.
+
+## Docker
+- **Build image**: `docker build -t phishing-campaign-simulator .`
+- **Run container**: `docker run --rm -p 4000:4000 phishing-campaign-simulator`
+- **Persistent data (volume)**: `docker run --rm -p 4000:4000 -v phishlab-data:/app/server/data phishing-campaign-simulator`
+- **Русский (кратко)**: Соберите образ (`docker build ...`), затем запустите контейнер (`docker run ...`), при необходимости подключив volume для папки `/app/server/data`, чтобы базы и настройки сохранялись между перезапусками.
+- Контейнер обслуживает API и статический фронтенд на `http://localhost:4000`.
+
 ### Scripts Summary
 | Script | Description |
 | ------ | ----------- |
@@ -74,6 +96,8 @@ Base URL: `http://localhost:4000/api`
 | `POST` | `/team` | Invite a member (`email`, `role`, optional `name`). |
 | `PUT`  | `/team/:id` | Update member profile/role. |
 | `DELETE` | `/team/:id` | Remove a member. |
+| `GET`  | `/email/status` | SMTP configuration status (admin). |
+| `POST` | `/email/test` | Send a test email using configured SMTP (admin). |
 
 The backend persists data to `server/data/db.json`. Feel free to seed with real integrations or swap to a database when moving beyond prototyping.
 

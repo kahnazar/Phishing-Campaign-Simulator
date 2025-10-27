@@ -24,8 +24,21 @@ export interface Translations {
   create: string;
   upload: string;
   download: string;
+  signOut: string;
   all: string;
   
+  // Authentication
+  loginTitle: string;
+  loginSubtitle: string;
+  loginEmailLabel: string;
+  loginPasswordLabel: string;
+  loginButton: string;
+  loginButtonLoading: string;
+  loginHelperText: string;
+  loginSuccess: string;
+  loginErrorFallback: string;
+  loginProductTagline: string;
+
   // Dashboard
   dashboardTitle: string;
   dashboardSubtitle: string;
@@ -137,6 +150,7 @@ export interface Translations {
   deleteUser: string;
   updateRole: string;
   selectRole: string;
+  teamAdminOnly: string;
   
   // Settings
   settingsTitle: string;
@@ -243,7 +257,20 @@ export const translations: Record<Language, Translations> = {
     create: 'Create',
     upload: 'Upload',
     download: 'Download',
+    signOut: 'Sign out',
     all: 'All',
+    
+    // Authentication
+    loginTitle: 'Sign in to continue',
+    loginSubtitle: 'Access the PhishLab admin console with your secure credentials.',
+    loginEmailLabel: 'Work email',
+    loginPasswordLabel: 'Password',
+    loginButton: 'Sign in',
+    loginButtonLoading: 'Signing in…',
+    loginHelperText: 'Default admin: admin@company.com / admin123. Replace with secure credentials in production.',
+    loginSuccess: 'Welcome back!',
+    loginErrorFallback: 'Unable to sign in. Check your credentials and try again.',
+    loginProductTagline: 'Phishing Campaign Simulator',
     
     // Dashboard
     dashboardTitle: 'Dashboard',
@@ -356,6 +383,7 @@ export const translations: Record<Language, Translations> = {
     deleteUser: 'Delete User',
     updateRole: 'Update Role',
     selectRole: 'Select Role',
+    teamAdminOnly: 'Only administrators can manage team members and roles.',
     
     // Settings
     settingsTitle: 'Settings',
@@ -461,7 +489,20 @@ export const translations: Record<Language, Translations> = {
     create: 'Создать',
     upload: 'Загрузить',
     download: 'Скачать',
+    signOut: 'Выйти',
     all: 'Все',
+    
+    // Authentication
+    loginTitle: 'Войдите в систему',
+    loginSubtitle: 'Используйте корпоративные учётные данные, чтобы открыть панель PhishLab.',
+    loginEmailLabel: 'Рабочий email',
+    loginPasswordLabel: 'Пароль',
+    loginButton: 'Войти',
+    loginButtonLoading: 'Входим…',
+    loginHelperText: 'Администратор по умолчанию: admin@company.com / admin123. В продакшене обязательно смените пароль.',
+    loginSuccess: 'Добро пожаловать!',
+    loginErrorFallback: 'Не удалось войти. Проверьте данные и попробуйте снова.',
+    loginProductTagline: 'Симулятор фишинговых кампаний',
     
     // Dashboard
     dashboardTitle: 'Панель управления',
@@ -574,6 +615,7 @@ export const translations: Record<Language, Translations> = {
     deleteUser: 'Удалить пользователя',
     updateRole: 'Обновить роль',
     selectRole: 'Выбрать роль',
+    teamAdminOnly: 'Управлять участниками и ролями могут только администраторы.',
     
     // Settings
     settingsTitle: 'Настройки',
@@ -679,7 +721,20 @@ export const translations: Record<Language, Translations> = {
     create: 'Yaratish',
     upload: 'Yuklash',
     download: 'Yuklab olish',
+    signOut: 'Chiqish',
     all: 'Hammasi',
+    
+    // Authentication
+    loginTitle: 'Tizimga kirish',
+    loginSubtitle: 'PhishLab boshqaruv paneliga kirish uchun ishchi maʼlumotlaringizni kiriting.',
+    loginEmailLabel: 'Ishchi email',
+    loginPasswordLabel: 'Parol',
+    loginButton: 'Kirish',
+    loginButtonLoading: 'Kirilmoqda…',
+    loginHelperText: 'Standart admin: admin@company.com / admin123. Ishga tushirganda parolni albatta almashtiring.',
+    loginSuccess: 'Xush kelibsiz!',
+    loginErrorFallback: 'Kirish muvaffaqiyatsiz. Maʼlumotlarni tekshirib qayta urinib ko‘ring.',
+    loginProductTagline: 'Fishing kampaniyalar simulyatori',
     
     // Dashboard
     dashboardTitle: 'Boshqaruv paneli',
@@ -792,6 +847,7 @@ export const translations: Record<Language, Translations> = {
     deleteUser: "Foydalanuvchini o'chirish",
     updateRole: 'Rolni yangilash',
     selectRole: 'Rolni tanlash',
+    teamAdminOnly: "Jamoa a'zolari va rollarni faqat administratorlar boshqarishi mumkin.",
     
     // Settings
     settingsTitle: 'Sozlamalar',

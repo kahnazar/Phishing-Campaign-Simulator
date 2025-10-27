@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { apiClient } from './api-client';
+import { useAuth } from './auth-context';
 import type {
   Campaign,
   CreateCampaignPayload,
@@ -36,8 +37,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const { token } = useAuth();
 
   const refreshAll = useCallback(async () => {
+    if (!token) {
+      setTemplates([]);
+      setCampaigns([]);
+      setRecipients([]);
+      setTeamMembers([]);
+      setError(undefined);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const [templatesData, campaignsData, recipientsData, teamData] = await Promise.all([
@@ -58,7 +70,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     void refreshAll();

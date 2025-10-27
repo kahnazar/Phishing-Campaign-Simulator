@@ -12,9 +12,20 @@ import { SettingsView } from "./components/settings-view";
 import { TeamView } from "./components/team-view";
 import { Toaster } from "./components/ui/sonner";
 import { I18nProvider } from "./lib/i18n";
+import { useAuth } from "./lib/auth-context";
+import { LoginView } from "./components/login-view";
 import { useAppData } from "./lib/app-data-context";
 
-export default function App() {
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
+      <div className="size-10 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
+      <p className="text-sm text-muted-foreground">Preparing PhishLab…</p>
+    </div>
+  );
+}
+
+function AuthenticatedApp() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [viewData, setViewData] = useState<any>(null);
   const { error } = useAppData();
@@ -52,23 +63,31 @@ export default function App() {
   };
 
   return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full overflow-x-hidden bg-background">
+        <AppSidebar currentView={currentView} onNavigate={handleNavigate} />
+        <SidebarInset className="flex min-h-screen flex-1 flex-col overflow-x-hidden">
+          <div className="flex flex-1 flex-col">
+            {error && (
+              <div className="border-b border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive sm:px-6">
+                {error}
+              </div>
+            )}
+            {renderView()}
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+export default function App() {
+  const { user, initializing } = useAuth();
+
+  return (
     <I18nProvider>
-      <SidebarProvider>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar currentView={currentView} onNavigate={handleNavigate} />
-          <SidebarInset className="flex-1">
-            <div className="h-screen flex flex-col overflow-hidden">
-              {error && (
-                <div className="border-b border-destructive/40 bg-destructive/10 px-6 py-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
-              {renderView()}
-            </div>
-          </SidebarInset>
-        </div>
-        <Toaster />
-      </SidebarProvider>
+      {initializing ? <LoadingScreen /> : user ? <AuthenticatedApp /> : <LoginView />}
+      <Toaster />
     </I18nProvider>
   );
 }

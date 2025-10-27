@@ -356,18 +356,19 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
   const selectedBlockData = blocks.find(b => b.id === selectedBlock);
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] gap-6">
-      {/* Left Sidebar - Blocks & Properties */}
-      <Card className="w-80 shrink-0">
-        <Tabs defaultValue="blocks" className="h-full">
-          <div className="border-b p-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="blocks">Blocks</TabsTrigger>
-              <TabsTrigger value="properties">Properties</TabsTrigger>
-            </TabsList>
-          </div>
-          
-          <TabsContent value="blocks" className="m-0 h-[calc(100vh-16rem)]">
+    <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+      <div className="flex flex-col gap-6 xl:flex-row">
+        {/* Left Sidebar - Blocks & Properties */}
+        <Card className="w-full shrink-0 xl:w-80">
+          <Tabs defaultValue="blocks" className="h-full">
+            <div className="border-b p-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="blocks">Blocks</TabsTrigger>
+                <TabsTrigger value="properties">Properties</TabsTrigger>
+              </TabsList>
+            </div>
+            
+          <TabsContent value="blocks" className="m-0 h-[50vh] xl:h-[calc(100vh-18rem)]">
             <ScrollArea className="h-full">
               <div className="space-y-1 p-4">
                 <p className="mb-3 text-sm font-medium">Add Blocks</p>
@@ -404,7 +405,7 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="properties" className="m-0 h-[calc(100vh-16rem)]">
+          <TabsContent value="properties" className="m-0 h-[50vh] xl:h-[calc(100vh-18rem)]">
             <ScrollArea className="h-full">
               <div className="space-y-4 p-4">
                 {selectedBlockData ? (
@@ -544,13 +545,13 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
       </Card>
 
       {/* Center - Editor Canvas */}
-      <div className="flex-1 space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button variant="ghost" onClick={() => onNavigate('templates')}>
             <ChevronLeft className="mr-2 size-4" />
             Back to Templates
           </Button>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button 
               variant="outline" 
               size="sm"
@@ -672,14 +673,14 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
       </div>
 
       {/* Right Sidebar - Settings */}
-      <Card className="w-64 shrink-0">
+      <Card className="w-full shrink-0 xl:w-64">
         <div className="border-b p-4">
           <div className="flex items-center gap-2">
             <Settings2 className="size-4" />
             <h3 className="font-medium">Email Settings</h3>
           </div>
         </div>
-        <ScrollArea className="h-[calc(100vh-12rem)]">
+        <ScrollArea className="h-[50vh] xl:h-[calc(100vh-14rem)]">
           <div className="space-y-4 p-4">
             <div className="space-y-2">
               <Label>Sender Name</Label>
@@ -740,6 +741,7 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
         currentHtml={customHtml || generateHtml()}
         onImport={handleHtmlImport}
       />
+      </div>
     </div>
   );
 }

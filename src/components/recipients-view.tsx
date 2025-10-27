@@ -22,6 +22,16 @@ import {
 import { Checkbox } from "./ui/checkbox";
 import { useTranslation } from "../lib/i18n";
 import { useAppData } from "../lib/app-data-context";
+import type { Recipient } from "../types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
 const groups = [
   { name: 'All Employees', count: 245, riskScore: 32 },
@@ -40,6 +50,8 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
   const { recipients, loading } = useAppData();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
+  const [viewingRecipient, setViewingRecipient] = useState<Recipient | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   const filteredRecipients = recipients.filter(r =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -59,10 +71,22 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
     );
   };
 
+  const handleViewRecipient = (recipient: Recipient) => {
+    setViewingRecipient(recipient);
+    setViewDialogOpen(true);
+  };
+
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase();
+
   return (
     <>
       {/* Fixed Header */}
-      <div className="shrink-0 border-b bg-background px-6 py-4">
+      <div className="shrink-0 border-b bg-background px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between">
           <div>
             <h1>{t.recipientsTitle}</h1>
@@ -82,9 +106,9 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
         <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {groups.map((group) => (
           <Card key={group.name} className="transition-shadow hover:shadow-md">
             <CardContent className="p-6">
@@ -164,61 +188,67 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
             </div>
           )}
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={selectedRecipients.length === filteredRecipients.length}
-                    onCheckedChange={toggleAll}
-                  />
-                </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Position</TableHead>
-                <TableHead>Campaigns</TableHead>
-                <TableHead>Click Rate</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRecipients.map((recipient) => (
-                <TableRow key={recipient.id}>
-                  <TableCell>
+          <div className="overflow-x-auto">
+            <Table className="min-w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedRecipients.includes(recipient.id)}
-                      onCheckedChange={() => toggleRecipient(recipient.id)}
+                      checked={selectedRecipients.length === filteredRecipients.length && filteredRecipients.length > 0}
+                      onCheckedChange={toggleAll}
                     />
-                  </TableCell>
-                  <TableCell className="font-medium">{recipient.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{recipient.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{recipient.department}</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{recipient.position}</TableCell>
-                  <TableCell>{recipient.campaigns}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant="outline"
-                      className={
-                        parseInt(recipient.clickRate) > 40 ? 'bg-red-100 text-red-700' :
-                        parseInt(recipient.clickRate) > 25 ? 'bg-orange-100 text-orange-700' :
-                        'bg-green-100 text-green-700'
-                      }
-                    >
-                      {recipient.clickRate}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      View Profile
-                    </Button>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead>{t.name}</TableHead>
+                  <TableHead>{t.email}</TableHead>
+                  <TableHead>{t.department}</TableHead>
+                  <TableHead>{t.position}</TableHead>
+                  <TableHead>{t.campaigns}</TableHead>
+                  <TableHead>{t.clickRate}</TableHead>
+                  <TableHead />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredRecipients.map((recipient) => (
+                  <TableRow key={recipient.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedRecipients.includes(recipient.id)}
+                        onCheckedChange={() => toggleRecipient(recipient.id)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{recipient.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{recipient.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{recipient.department}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{recipient.position}</TableCell>
+                    <TableCell>{recipient.campaigns}</TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="outline"
+                        className={
+                          parseInt(recipient.clickRate) > 40 ? 'bg-red-100 text-red-700' :
+                          parseInt(recipient.clickRate) > 25 ? 'bg-orange-100 text-orange-700' :
+                          'bg-green-100 text-green-700'
+                        }
+                      >
+                        {recipient.clickRate}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewRecipient(recipient)}
+                      >
+                        {t.viewProfile}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
           {!loading && filteredRecipients.length === 0 && (
             <div className="mt-6 rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -256,6 +286,63 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
       </Card>
         </div>
       </div>
+
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{viewingRecipient?.name}</DialogTitle>
+            <DialogDescription>{viewingRecipient?.email}</DialogDescription>
+          </DialogHeader>
+          {viewingRecipient && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 rounded-lg border p-4">
+                <Avatar className="size-14">
+                  <AvatarFallback className="text-lg">
+                    {getInitials(viewingRecipient.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Department:</span>
+                    <Badge variant="outline">{viewingRecipient.department}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Position:</span>
+                    <span className="font-medium">{viewingRecipient.position}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">Campaigns:</span>
+                    <span className="font-medium">{viewingRecipient.campaigns}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border bg-muted/40 p-4">
+                <p className="mb-2 text-sm font-medium">Engagement</p>
+                <div className="flex items-center gap-3 text-sm">
+                  <Badge
+                    variant="outline"
+                    className={
+                      parseInt(viewingRecipient.clickRate) > 40
+                        ? 'bg-red-100 text-red-700'
+                        : parseInt(viewingRecipient.clickRate) > 25
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-green-100 text-green-700'
+                    }
+                  >
+                    {viewingRecipient.clickRate} click rate
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
