@@ -10,6 +10,9 @@ import type {
   Template,
   UpdateCampaignPayload,
   UpdateTeamMemberPayload,
+  CreateRecipientPayload,
+  RecipientImportResult,
+  DirectoryImportRequest,
 } from '../types';
 
 interface AppDataContextValue {
@@ -26,6 +29,13 @@ interface AppDataContextValue {
   inviteTeamMember: (payload: InviteMemberPayload) => Promise<TeamMember>;
   updateTeamMember: (id: string, payload: UpdateTeamMemberPayload) => Promise<TeamMember>;
   deleteTeamMember: (id: string) => Promise<void>;
+  createRecipient: (payload: CreateRecipientPayload) => Promise<Recipient>;
+  importRecipientsFromCsv: (csv: string, updateExisting?: boolean) => Promise<RecipientImportResult>;
+  importRecipientsFromGoogle: (sheetUrl: string, updateExisting?: boolean) => Promise<RecipientImportResult>;
+  importRecipientsFromDirectory: (
+    payload: DirectoryImportRequest,
+    updateExisting?: boolean
+  ) => Promise<RecipientImportResult>;
 }
 
 const AppDataContext = createContext<AppDataContextValue | undefined>(undefined);
@@ -110,6 +120,39 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setTeamMembers((prev) => prev.filter((member) => member.id !== id));
   }, []);
 
+  const createRecipient = useCallback(async (payload: CreateRecipientPayload) => {
+    const created = await apiClient.createRecipient(payload);
+    setRecipients((prev) => [...prev, created]);
+    return created;
+  }, []);
+
+  const importRecipientsFromCsv = useCallback(
+    async (csv: string, updateExisting = true) => {
+      const result = await apiClient.importRecipientsFromCsv(csv, updateExisting);
+      await refreshAll();
+      return result;
+    },
+    [refreshAll],
+  );
+
+  const importRecipientsFromGoogle = useCallback(
+    async (sheetUrl: string, updateExisting = true) => {
+      const result = await apiClient.importRecipientsFromGoogle(sheetUrl, updateExisting);
+      await refreshAll();
+      return result;
+    },
+    [refreshAll],
+  );
+
+  const importRecipientsFromDirectory = useCallback(
+    async (payload: DirectoryImportRequest, updateExisting = true) => {
+      const result = await apiClient.importRecipientsFromDirectory(payload, updateExisting);
+      await refreshAll();
+      return result;
+    },
+    [refreshAll],
+  );
+
   const value = useMemo<AppDataContextValue>(
     () => ({
       loading,
@@ -125,6 +168,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       inviteTeamMember,
       updateTeamMember,
       deleteTeamMember,
+      createRecipient,
+      importRecipientsFromCsv,
+      importRecipientsFromGoogle,
+      importRecipientsFromDirectory,
     }),
     [
       loading,
@@ -140,6 +187,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       inviteTeamMember,
       updateTeamMember,
       deleteTeamMember,
+      createRecipient,
+      importRecipientsFromCsv,
+      importRecipientsFromGoogle,
+      importRecipientsFromDirectory,
     ]
   );
 

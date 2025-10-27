@@ -21,6 +21,7 @@ import {
 } from "./ui/table";
 import { useTranslation } from "../lib/i18n";
 import { useAppData } from "../lib/app-data-context";
+import { toast } from "sonner@2.0.3";
 
 interface ReportsViewProps {
   onNavigate: (view: string) => void;
@@ -68,6 +69,63 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
     }
   ];
 
+  const downloadCsv = (filename: string, rows: string[][]) => {
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) => {
+            const safe = value ?? '';
+            if (/[",\n]/.test(safe)) {
+              return `"${safe.replace(/"/g, '""')}"`;
+            }
+            return safe;
+          })
+          .join(',')
+      )
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportReport = () => {
+    if (!campaigns.length) {
+      toast('No campaign data to export yet');
+      return;
+    }
+    const rows = [
+      ['Campaign', 'Template', 'Status', 'Recipients', 'Sent', 'Opened', 'Clicked', 'Submitted', 'Open Rate', 'Click Rate', 'Submit Rate'],
+      ...campaigns.map((campaign) => {
+        const openRate = campaign.sent > 0 ? `${Math.round((campaign.opened / campaign.sent) * 100)}%` : '0%';
+        const clickRate = campaign.sent > 0 ? `${Math.round((campaign.clicked / campaign.sent) * 100)}%` : '0%';
+        const submitRate = campaign.sent > 0 ? `${Math.round((campaign.submitted / campaign.sent) * 100)}%` : '0%';
+        return [
+          campaign.name,
+          campaign.template,
+          campaign.status,
+          String(campaign.recipients),
+          String(campaign.sent),
+          String(campaign.opened),
+          String(campaign.clicked),
+          String(campaign.submitted),
+          openRate,
+          clickRate,
+          submitRate,
+        ];
+      }),
+    ];
+
+    downloadCsv(`campaign-report-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    toast.success('Campaign report exported');
+  };
+
   return (
     <>
       {/* Fixed Header */}
@@ -77,7 +135,7 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
             <h1>{t.reportsTitle}</h1>
             <p className="text-muted-foreground">{t.reportsSubtitle}</p>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleExportReport}>
             <Download className="mr-2 size-4" />
             {t.exportReport}
           </Button>

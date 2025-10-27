@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { 
   Upload, 
@@ -23,6 +24,8 @@ import { Checkbox } from "./ui/checkbox";
 import { useTranslation } from "../lib/i18n";
 import { useAppData } from "../lib/app-data-context";
 import type { Recipient } from "../types";
+import { toast } from "sonner@2.0.3";
+import { Textarea } from "./ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -47,11 +50,32 @@ interface RecipientsViewProps {
 
 export function RecipientsView({ onNavigate }: RecipientsViewProps) {
   const { t } = useTranslation();
-  const { recipients, loading } = useAppData();
+  const {
+    recipients,
+    loading,
+    createRecipient: createRecipientAction,
+    importRecipientsFromCsv,
+    importRecipientsFromGoogle,
+    importRecipientsFromDirectory,
+  } = useAppData();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [viewingRecipient, setViewingRecipient] = useState<Recipient | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [googleDialogOpen, setGoogleDialogOpen] = useState(false);
+  const [directoryDialogOpen, setDirectoryDialogOpen] = useState(false);
+  const [newRecipientForm, setNewRecipientForm] = useState({
+    name: "",
+    email: "",
+    department: "",
+    position: "",
+  });
+  const [creatingRecipient, setCreatingRecipient] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [googleSheetUrl, setGoogleSheetUrl] = useState("");
+  const [directoryText, setDirectoryText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const filteredRecipients = recipients.filter(r =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -83,8 +107,198 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
       .join('')
       .toUpperCase();
 
+  const resetNewRecipientForm = () => {
+    setNewRecipientForm({
+      name: "",
+      email: "",
+      department: "",
+      position: "",
+    });
+  };
+
+  const handleAddRecipientClick = () => {
+    resetNewRecipientForm();
+    setAddDialogOpen(true);
+  };
+
+  const handleCreateRecipient = async () => {
+    const { name, email, department, position } = newRecipientForm;
+    if (!email.trim()) {
+      toast.error('Email is required');
+      return;
+    }
+    if (!name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+
+    try {
+      setCreatingRecipient(true);
+      await createRecipientAction({
+        name: name.trim(),
+        email: email.trim(),
+        department: department.trim() || 'General',
+        position: position.trim() || 'Employee',
+      });
+      toast.success('Recipient added');
+      setAddDialogOpen(false);
+      resetNewRecipientForm();
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add recipient');
+    } finally {
+      setCreatingRecipient(false);
+    }
+  };
+
+  const triggerCsvPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const summarizeImport = (result: { added: number; updated: number; skipped: Array<{ email: string; reason: string }>; total: number }) => {
+    const parts = [];
+    if (result.added > 0) {
+      parts.push(`${result.added} added`);
+    }
+    if (result.updated > 0) {
+      parts.push(`${result.updated} updated`);
+    }
+    const summary = parts.length ? parts.join(', ') : 'No changes';
+    result.skipped.length
+      ? toast(`${summary}. ${result.skipped.length} skipped.`)
+      : toast.success(summary);
+  };
+
+  const handleCsvFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) {
+      return;
+    }
+
+    try {
+      setImporting(true);
+      const text = await file.text();
+      const result = await importRecipientsFromCsv(text, true);
+      summarizeImport(result);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to import CSV');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleGoogleImport = async () => {
+    if (!googleSheetUrl.trim()) {
+      toast.error('Provide a Google Sheets link');
+      return;
+    }
+    try {
+      setImporting(true);
+      const result = await importRecipientsFromGoogle(googleSheetUrl.trim(), true);
+      summarizeImport(result);
+      setGoogleSheetUrl('');
+      setGoogleDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to import from Google Sheets');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const parseDirectoryEntries = (text: string) => {
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const parts = line.split(/[;,]/).map((part) => part.trim());
+        return {
+          name: parts[0],
+          email: parts[1],
+          department: parts[2],
+          position: parts[3],
+        };
+      });
+  };
+
+  const handleDirectoryImport = async () => {
+    const entries = parseDirectoryEntries(directoryText);
+    if (!entries.length) {
+      toast.error('Paste at least one directory row (Name,Email,Department,Title)');
+      return;
+    }
+    try {
+      setImporting(true);
+      const result = await importRecipientsFromDirectory({ entries }, true);
+      summarizeImport(result);
+      setDirectoryText('');
+      setDirectoryDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to import directory data');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const downloadCsv = (filename: string, rows: string[][]) => {
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) => {
+            const safe = value ?? '';
+            if (/[",\n]/.test(safe)) {
+              return `"${safe.replace(/"/g, '""')}"`;
+            }
+            return safe;
+          })
+          .join(',')
+      )
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportRecipients = () => {
+    if (!recipients.length) {
+      toast('Nothing to export yet');
+      return;
+    }
+    const rows = [
+      ['Name', 'Email', 'Department', 'Position', 'Campaigns', 'Click Rate'],
+      ...recipients.map((recipient) => [
+        recipient.name,
+        recipient.email,
+        recipient.department,
+        recipient.position,
+        String(recipient.campaigns ?? 0),
+        recipient.clickRate || '0%',
+      ]),
+    ];
+    downloadCsv(`recipients-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    toast.success('Recipients exported');
+  };
+
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={handleCsvFileChange}
+      />
       {/* Fixed Header */}
       <div className="shrink-0 border-b bg-background px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between">
@@ -93,11 +307,11 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
             <p className="text-muted-foreground">{t.recipientsSubtitle}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={triggerCsvPicker} disabled={importing}>
               <Upload className="mr-2 size-4" />
               {t.importCSV}
             </Button>
-            <Button>
+            <Button onClick={handleAddRecipientClick}>
               <UserPlus className="mr-2 size-4" />
               {t.addRecipient}
             </Button>
@@ -146,7 +360,7 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
                 <Filter className="mr-2 size-4" />
                 Filter
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleExportRecipients}>
                 <Download className="mr-2 size-4" />
                 Export
               </Button>
@@ -264,11 +478,21 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Button variant="outline" className="h-20 flex-col">
+            <Button
+              variant="outline"
+              className="h-20 flex-col"
+              onClick={triggerCsvPicker}
+              disabled={importing}
+            >
               <Upload className="mb-2 size-6" />
               <span>Upload CSV File</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button
+              variant="outline"
+              className="h-20 flex-col"
+              onClick={() => setGoogleDialogOpen(true)}
+              disabled={importing}
+            >
               <svg className="mb-2 size-6" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -277,7 +501,12 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
               </svg>
               <span>Google Sheets</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col">
+            <Button
+              variant="outline"
+              className="h-20 flex-col"
+              onClick={() => setDirectoryDialogOpen(true)}
+              disabled={importing}
+            >
               <Users className="mb-2 size-6" />
               <span>Active Directory</span>
             </Button>
@@ -286,6 +515,128 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
       </Card>
         </div>
       </div>
+
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Recipient</DialogTitle>
+            <DialogDescription>Manually add a single recipient to the directory.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="recipient-name">Full Name</Label>
+              <Input
+                id="recipient-name"
+                value={newRecipientForm.name}
+                onChange={(event) => setNewRecipientForm((prev) => ({ ...prev, name: event.target.value }))}
+                placeholder="Alex Rivera"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="recipient-email">Email</Label>
+              <Input
+                id="recipient-email"
+                type="email"
+                value={newRecipientForm.email}
+                onChange={(event) => setNewRecipientForm((prev) => ({ ...prev, email: event.target.value }))}
+                placeholder="alex.rivera@example.com"
+              />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="recipient-department">Department</Label>
+                <Input
+                  id="recipient-department"
+                  value={newRecipientForm.department}
+                  onChange={(event) => setNewRecipientForm((prev) => ({ ...prev, department: event.target.value }))}
+                  placeholder="Sales"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="recipient-position">Title</Label>
+                <Input
+                  id="recipient-position"
+                  value={newRecipientForm.position}
+                  onChange={(event) => setNewRecipientForm((prev) => ({ ...prev, position: event.target.value }))}
+                  placeholder="Account Executive"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)} disabled={creatingRecipient}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRecipient} disabled={creatingRecipient}>
+              {creatingRecipient ? 'Saving…' : 'Save Recipient'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={googleDialogOpen} onOpenChange={setGoogleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import from Google Sheets</DialogTitle>
+            <DialogDescription>
+              Share the sheet publicly and paste the link below. The first worksheet will be imported.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid gap-2">
+              <Label htmlFor="google-sheet-url">Google Sheets URL</Label>
+              <Input
+                id="google-sheet-url"
+                value={googleSheetUrl}
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                onChange={(event) => setGoogleSheetUrl(event.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Columns supported: <strong>Name</strong>, <strong>Email</strong>, <strong>Department</strong>, <strong>Title</strong>,
+              optional <strong>Campaigns</strong> and <strong>Click Rate</strong>.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGoogleDialogOpen(false)} disabled={importing}>
+              Cancel
+            </Button>
+            <Button onClick={handleGoogleImport} disabled={importing}>
+              {importing ? 'Importing…' : 'Import'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={directoryDialogOpen} onOpenChange={setDirectoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import from Active Directory</DialogTitle>
+            <DialogDescription>
+              Paste comma or semicolon separated rows (Name, Email, Department, Title). One entry per line.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              value={directoryText}
+              onChange={(event) => setDirectoryText(event.target.value)}
+              rows={6}
+              placeholder={"Jane Doe, jane.doe@example.com, Finance, Controller\nJohn Smith; john.smith@example.com; IT; Engineer"}
+            />
+            <p className="text-xs text-muted-foreground">
+              Existing recipients are updated automatically. Leave additional metrics blank to initialise them at zero.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDirectoryDialogOpen(false)} disabled={importing}>
+              Cancel
+            </Button>
+            <Button onClick={handleDirectoryImport} disabled={importing}>
+              {importing ? 'Importing…' : 'Import Entries'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent>

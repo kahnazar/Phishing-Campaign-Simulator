@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -20,6 +20,7 @@ import { useTranslation } from "../lib/i18n";
 import { apiClient } from "../lib/api-client";
 import { toast } from "sonner@2.0.3";
 import { Textarea } from "./ui/textarea";
+import type { SmtpStatus, UpdateSmtpConfigPayload } from "../types";
 
 interface SettingsViewProps {
   onNavigate: (view: string) => void;
@@ -27,12 +28,31 @@ interface SettingsViewProps {
 
 export function SettingsView({ onNavigate }: SettingsViewProps) {
   const { t } = useTranslation();
-  const [smtpStatus, setSmtpStatus] = useState<{ configured: boolean; reason?: string; host?: string; from?: string; secure?: boolean; hasAuth?: boolean } | null>(null);
+  const [smtpStatus, setSmtpStatus] = useState<SmtpStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
+  const [smtpForm, setSmtpForm] = useState({
+    host: '',
+    port: '',
+    secure: true,
+    user: '',
+    pass: '',
+    from: '',
+  });
+  const [hasStoredPassword, setHasStoredPassword] = useState(false);
+  const [clearStoredPassword, setClearStoredPassword] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
   const [testEmail, setTestEmail] = useState('');
   const [testSubject, setTestSubject] = useState('PhishLab SMTP Test');
   const [testMessage, setTestMessage] = useState('This is a test email from PhishLab.');
   const [sendingTest, setSendingTest] = useState(false);
+  const envKeyLabels: Record<string, string> = {
+    host: 'SMTP_HOST',
+    port: 'SMTP_PORT',
+    secure: 'SMTP_SECURE',
+    user: 'SMTP_USER',
+    pass: 'SMTP_PASS',
+    from: 'SMTP_FROM',
+  };
 
   const loadStatus = async () => {
     try {
@@ -40,7 +60,7 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
       const status = await apiClient.getEmailStatus();
       setSmtpStatus(status);
       if (status?.from) {
-        setTestEmail(status.from);
+        setTestEmail((prev) => (prev ? prev : status.from || prev));
       }
     } catch (error) {
       console.error(error);
@@ -50,8 +70,31 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
     }
   };
 
+  const loadConfig = async () => {
+    try {
+      const config = await apiClient.getEmailConfig();
+      setSmtpForm({
+        host: config.host || '',
+        port: config.port ? String(config.port) : '',
+        secure: config.secure ?? false,
+        user: config.user || '',
+        pass: '',
+        from: config.from || '',
+      });
+      setHasStoredPassword(Boolean(config.hasPassword));
+      setClearStoredPassword(false);
+      if (config.from) {
+        setTestEmail((prev) => (prev ? prev : config.from || prev));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
-    void loadStatus();
+    void (async () => {
+      await Promise.all([loadStatus(), loadConfig()]);
+    })();
   }, []);
 
   const handleSendTestEmail = async () => {
@@ -69,6 +112,79 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
     } finally {
       setSendingTest(false);
     }
+  };
+
+  const handleSaveConfig = async () => {
+    try {
+      setSavingConfig(true);
+      const hostValue = smtpForm.host.trim();
+      const userValue = smtpForm.user.trim();
+      const fromValue = smtpForm.from.trim();
+      const portValue = smtpForm.port.trim();
+
+      const payload: UpdateSmtpConfigPayload = {
+        host: hostValue,
+        secure: smtpForm.secure,
+        user: userValue,
+        from: fromValue,
+      };
+
+      if (portValue === '') {
+        payload.port = '';
+      } else {
+        payload.port = Number(portValue);
+      }
+
+      if (clearStoredPassword) {
+        payload.pass = '';
+      } else if (smtpForm.pass) {
+        payload.pass = smtpForm.pass;
+      }
+
+      const updated = await apiClient.updateEmailConfig(payload);
+      setSmtpForm({
+        host: updated.host || '',
+        port: updated.port ? String(updated.port) : '',
+        secure: updated.secure ?? false,
+        user: updated.user || '',
+        pass: '',
+        from: updated.from || '',
+      });
+      setHasStoredPassword(Boolean(updated.hasPassword));
+      setClearStoredPassword(false);
+      toast.success('SMTP settings saved');
+      await loadStatus();
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save SMTP settings');
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const handleFieldChange = (field: 'host' | 'port' | 'user' | 'pass' | 'from') => (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const value = event.target.value;
+    setSmtpForm((prev) => ({ ...prev, [field]: value }));
+    if (field === 'pass') {
+      setClearStoredPassword(false);
+      setHasStoredPassword(false);
+    }
+  };
+
+  const handleSecureToggle = (checked: boolean) => {
+    setSmtpForm((prev) => ({ ...prev, secure: checked }));
+  };
+
+  const handleClearPassword = () => {
+    setClearStoredPassword(true);
+    setHasStoredPassword(false);
+    setSmtpForm((prev) => ({ ...prev, pass: '' }));
+  };
+
+  const handleResetConfig = () => {
+    void loadConfig();
   };
 
   return (
@@ -112,25 +228,81 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="smtp-host">SMTP Host</Label>
-                  <Input id="smtp-host" placeholder="smtp.gmail.com" />
+                  <Input
+                    id="smtp-host"
+                    placeholder="smtp.gmail.com"
+                    value={smtpForm.host}
+                    onChange={handleFieldChange('host')}
+                  />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="smtp-port">Port</Label>
-                    <Input id="smtp-port" placeholder="587" />
+                    <Input
+                      id="smtp-port"
+                      placeholder="587"
+                      value={smtpForm.port}
+                      onChange={handleFieldChange('port')}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="smtp-encryption">Encryption</Label>
-                    <Input id="smtp-encryption" placeholder="TLS" />
+                    <Label htmlFor="smtp-secure">Secure (TLS/SSL)</Label>
+                    <div className="flex items-center gap-3 rounded-md border px-3 py-2">
+                      <Switch
+                        id="smtp-secure"
+                        checked={smtpForm.secure}
+                        onCheckedChange={handleSecureToggle}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {smtpForm.secure ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="smtp-username">Username</Label>
-                  <Input id="smtp-username" placeholder="your-email@company.com" />
+                  <Input
+                    id="smtp-username"
+                    placeholder="your-email@company.com"
+                    value={smtpForm.user}
+                    onChange={handleFieldChange('user')}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="smtp-password">Password</Label>
-                  <Input id="smtp-password" type="password" placeholder="••••••••" />
+                  <div className="flex gap-2">
+                    <Input
+                      id="smtp-password"
+                      type="password"
+                      placeholder={hasStoredPassword && !clearStoredPassword ? '•••••••• (stored)' : 'Optional password'}
+                      value={smtpForm.pass}
+                      onChange={handleFieldChange('pass')}
+                    />
+                    {hasStoredPassword && !clearStoredPassword && (
+                      <Button type="button" variant="outline" size="sm" onClick={handleClearPassword}>
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                  {hasStoredPassword && !clearStoredPassword && (
+                    <p className="text-xs text-muted-foreground">
+                      A password is stored on the server. Leave blank to keep it.
+                    </p>
+                  )}
+                  {clearStoredPassword && (
+                    <p className="text-xs text-muted-foreground text-destructive">
+                      Password will be removed on save.
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="smtp-from">From Address</Label>
+                  <Input
+                    id="smtp-from"
+                    placeholder="noreply@company.com"
+                    value={smtpForm.from}
+                    onChange={handleFieldChange('from')}
+                  />
                 </div>
               </div>
 
@@ -157,8 +329,12 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
               <Separator />
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Save Changes</Button>
+                <Button variant="outline" type="button" onClick={handleResetConfig} disabled={savingConfig}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => void handleSaveConfig()} disabled={savingConfig}>
+                  {savingConfig ? 'Saving…' : 'Save Changes'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -184,6 +360,22 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
                     <p className="font-medium text-destructive">SMTP not configured</p>
                     <p className="text-muted-foreground">{smtpStatus?.reason || 'Missing environment variables. Update your deployment to include SMTP credentials.'}</p>
                   </div>
+                )}
+                {!statusLoading && smtpStatus?.stored && (
+                  <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                    <p>Stored host: {smtpStatus.stored.host || '—'}</p>
+                    <p>Stored from: {smtpStatus.stored.from || '—'}</p>
+                    <p>Stored port: {smtpStatus.stored.port ?? '—'}</p>
+                    <p>Stored auth: {smtpStatus.stored.hasPassword ? 'Password stored' : 'No password stored'}</p>
+                  </div>
+                )}
+                {!statusLoading && smtpStatus?.usingEnv && Object.values(smtpStatus.usingEnv).some(Boolean) && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Environment overrides: {Object.entries(smtpStatus.usingEnv)
+                      .filter(([, value]) => value)
+                      .map(([key]) => envKeyLabels[key] || key)
+                      .join(', ') || 'None'}
+                  </p>
                 )}
               </div>
 
@@ -268,8 +460,12 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Save Changes</Button>
+                <Button variant="outline" type="button" onClick={handleResetConfig} disabled={savingConfig}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => void handleSaveConfig()} disabled={savingConfig}>
+                  {savingConfig ? 'Saving…' : 'Save Changes'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -349,8 +545,12 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Save Changes</Button>
+                <Button variant="outline" type="button" onClick={handleResetConfig} disabled={savingConfig}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => void handleSaveConfig()} disabled={savingConfig}>
+                  {savingConfig ? 'Saving…' : 'Save Changes'}
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -412,8 +612,12 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Save Changes</Button>
+                <Button variant="outline" type="button" onClick={handleResetConfig} disabled={savingConfig}>
+                  Cancel
+                </Button>
+                <Button type="button" onClick={() => void handleSaveConfig()} disabled={savingConfig}>
+                  {savingConfig ? 'Saving…' : 'Save Changes'}
+                </Button>
               </div>
             </CardContent>
           </Card>

@@ -11,6 +11,13 @@ import type {
   UpdateCampaignPayload,
   UpdateTeamMemberPayload,
   SmtpTestPayload,
+  SmtpConfig,
+  UpdateSmtpConfigPayload,
+  SmtpStatus,
+  CreateRecipientPayload,
+  RecipientImportResult,
+  DirectoryRecipientInput,
+  DirectoryImportRequest,
 } from '../types';
 
 const API_BASE = '/api';
@@ -104,6 +111,52 @@ export const apiClient = {
     return handleResponse<Recipient[]>(response);
   },
 
+  async createRecipient(payload: CreateRecipientPayload): Promise<Recipient> {
+    const response = await fetch(`${API_BASE}/recipients`, {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<Recipient>(response);
+  },
+
+  async importRecipientsFromCsv(csv: string, updateExisting = true): Promise<RecipientImportResult> {
+    const response = await fetch(`${API_BASE}/recipients/import/csv`, {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ csv, updateExisting }),
+    });
+    return handleResponse<RecipientImportResult>(response);
+  },
+
+  async importRecipientsFromGoogle(sheetUrl: string, updateExisting = true): Promise<RecipientImportResult> {
+    const response = await fetch(`${API_BASE}/recipients/import/google`, {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ sheetUrl, updateExisting }),
+    });
+    return handleResponse<RecipientImportResult>(response);
+  },
+
+  async importRecipientsFromDirectory(
+    payload: DirectoryImportRequest,
+    updateExisting = true,
+  ): Promise<RecipientImportResult> {
+    const body: Record<string, unknown> = { updateExisting };
+    if (Array.isArray(payload.entries) && payload.entries.length > 0) {
+      body.entries = payload.entries;
+    }
+    if (payload.text && payload.text.trim()) {
+      body.text = payload.text;
+    }
+    const response = await fetch(`${API_BASE}/recipients/import/directory`, {
+      method: 'POST',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(body),
+    });
+    return handleResponse<RecipientImportResult>(response);
+  },
+
   async getTeamMembers(): Promise<TeamMember[]> {
     const response = await fetch(`${API_BASE}/team`, {
       headers: buildHeaders(),
@@ -140,11 +193,11 @@ export const apiClient = {
     }
   },
 
-  async getEmailStatus(): Promise<any> {
+  async getEmailStatus(): Promise<SmtpStatus> {
     const response = await fetch(`${API_BASE}/email/status`, {
       headers: buildHeaders(),
     });
-    return handleResponse(response);
+    return handleResponse<SmtpStatus>(response);
   },
 
   async sendTestEmail(payload: SmtpTestPayload): Promise<any> {
@@ -154,5 +207,21 @@ export const apiClient = {
       body: JSON.stringify(payload),
     });
     return handleResponse(response);
+  },
+
+  async getEmailConfig(): Promise<SmtpConfig> {
+    const response = await fetch(`${API_BASE}/email/config`, {
+      headers: buildHeaders(),
+    });
+    return handleResponse<SmtpConfig>(response);
+  },
+
+  async updateEmailConfig(payload: UpdateSmtpConfigPayload): Promise<SmtpConfig> {
+    const response = await fetch(`${API_BASE}/email/config`, {
+      method: 'PUT',
+      headers: buildHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse<SmtpConfig>(response);
   },
 };

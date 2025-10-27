@@ -70,7 +70,7 @@ export interface Translations {
   searchCampaigns: string;
   running: string;
   paused: string;
-  recipients: string;
+  recipientCountLabel: string;
   viewReport: string;
   editCampaign: string;
   duplicate: string;
@@ -205,7 +205,6 @@ export interface Translations {
   desktop: string;
   tablet: string;
   mobile: string;
-  emailSettings: string;
   subjectLine: string;
   fromName: string;
   fromEmail: string;
@@ -303,7 +302,7 @@ export const translations: Record<Language, Translations> = {
     searchCampaigns: 'Search campaigns...',
     running: 'Running',
     paused: 'Paused',
-    recipients: 'recipients',
+    recipientCountLabel: 'recipients',
     viewReport: 'View Report',
     editCampaign: 'Edit Campaign',
     duplicate: 'Duplicate',
@@ -438,7 +437,6 @@ export const translations: Record<Language, Translations> = {
     desktop: 'Desktop',
     tablet: 'Tablet',
     mobile: 'Mobile',
-    emailSettings: 'Email Settings',
     subjectLine: 'Subject Line',
     fromName: 'From Name',
     fromEmail: 'From Email',
@@ -535,7 +533,7 @@ export const translations: Record<Language, Translations> = {
     searchCampaigns: 'Поиск кампаний...',
     running: 'Запущена',
     paused: 'Приостановлена',
-    recipients: 'получателей',
+    recipientCountLabel: 'получателей',
     viewReport: 'Просмотр отчёта',
     editCampaign: 'Редактировать кампанию',
     duplicate: 'Дублировать',
@@ -670,7 +668,6 @@ export const translations: Record<Language, Translations> = {
     desktop: 'Десктоп',
     tablet: 'Планшет',
     mobile: 'Мобильный',
-    emailSettings: 'Настройки Email',
     subjectLine: 'Тема письма',
     fromName: 'От кого (имя)',
     fromEmail: 'От кого (email)',
@@ -767,7 +764,7 @@ export const translations: Record<Language, Translations> = {
     searchCampaigns: 'Kampaniyalarni qidirish...',
     running: 'Ishlamoqda',
     paused: "To'xtatilgan",
-    recipients: 'qabul qiluvchilar',
+    recipientCountLabel: 'qabul qiluvchilar',
     viewReport: "Hisobotni ko'rish",
     editCampaign: 'Kampaniyani tahrirlash',
     duplicate: 'Nusxa olish',
@@ -902,7 +899,6 @@ export const translations: Record<Language, Translations> = {
     desktop: 'Kompyuter',
     tablet: 'Planshet',
     mobile: 'Mobil',
-    emailSettings: 'Email sozlamalari',
     subjectLine: 'Mavzu qatori',
     fromName: 'Kimdan (ism)',
     fromEmail: 'Kimdan (email)',

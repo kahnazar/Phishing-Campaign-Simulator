@@ -38,6 +38,37 @@ export interface Recipient {
   clickRate: string;
 }
 
+export interface CreateRecipientPayload {
+  name: string;
+  email: string;
+  department?: string;
+  position?: string;
+  campaigns?: number;
+  clickRate?: string | number;
+}
+
+export interface DirectoryRecipientInput {
+  name?: string;
+  email: string;
+  department?: string;
+  position?: string;
+  campaigns?: number;
+  clickRate?: string | number;
+}
+
+export interface DirectoryImportRequest {
+  entries?: DirectoryRecipientInput[];
+  text?: string;
+}
+
+export interface RecipientImportResult {
+  source: 'csv' | 'google_sheets' | 'directory';
+  added: number;
+  updated: number;
+  total: number;
+  skipped: Array<{ email: string; reason: string }>;
+}
+
 export interface TeamMember {
   id: string;
   name: string;
@@ -87,4 +118,40 @@ export interface SmtpTestPayload {
   to: string;
   subject?: string;
   message?: string;
+}
+
+export interface SmtpConfig {
+  host: string;
+  port?: number | '';
+  secure: boolean;
+  user?: string;
+  from: string;
+  hasPassword?: boolean;
+}
+
+export interface UpdateSmtpConfigPayload {
+  host?: string;
+  port?: number | string;
+  secure?: boolean;
+  user?: string;
+  pass?: string;
+  from?: string;
+}
+
+export interface SmtpStatus {
+  configured: boolean;
+  reason?: string;
+  host?: string;
+  from?: string;
+  secure?: boolean;
+  hasAuth?: boolean;
+  usingEnv?: Record<string, boolean>;
+  stored?: {
+    host?: string | null;
+    port?: number | null;
+    secure?: boolean | null;
+    user?: string | null;
+    hasPassword?: boolean;
+    from?: string | null;
+  };
 }

@@ -1,44 +1,64 @@
 # SMTP / Email Delivery Guide
 
-This application does **not** include a working email pipeline out of the box. Follow the checklist below to enable outbound email (e.g., campaign notifications or test messages).
+PhishLab ships with a basic SMTP implementation powered by [Nodemailer](https://www.npmjs.com/package/nodemailer). You can configure credentials either via environment variables or through the Settings → SMTP screen.
 
-## 1. Install a Mail Transport Library
+## 0. Prepare a `.env` file
 
-- Recommended choice: [`nodemailer`](https://www.npmjs.com/package/nodemailer).
-- If you are running in an offline environment, download the package in advance or use an internal registry.
+- Copy `.env.example` to `.env` in the project root (`cp .env.example .env`).
+- Fill in the SMTP fields; leave placeholders blank if you want to supply them later via the web UI.
+- `.env` is loaded automatically by the Express server through the `dotenv` package. Keep this file out of source control (it is ignored by `.gitignore`).
 
-```bash
-npm install nodemailer
-```
+## 1. How configuration is resolved
 
-## 2. Extend the Backend
-
-1. Create a helper (e.g., `server/email.js`) that exports a `sendMail(options)` function using the transporter.
-2. Use environment variables to configure credentials:
+1. **Environment variables** (highest priority)
    - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`
    - `SMTP_USER`, `SMTP_PASS`
-   - `SMTP_FROM` (default From header)
-3. Add an Express route such as `POST /api/email/test` that validates payload and calls `sendMail`.
-4. Handle failures gracefully (timeouts, authentication errors) and log them server-side.
+   - `SMTP_FROM`
+2. **Saved settings** (`server/data/config.json`) – written from the UI when you click **Save Changes**.
+3. Defaults: port falls back to `587`, TLS is enabled automatically for port `465`.
 
-## 3. Secure Secrets
+If an environment variable is defined it overrides the saved value. This allows production deployments to keep secrets outside of the repo while local instances can rely on the built-in config store.
 
-- Never store SMTP passwords or API keys in git.
-- Use `.env` files, secret managers, or container orchestrator secret stores.
-- Update the Dockerfile to pass env vars via `docker run -e ...` or compose files.
+## 2. Managing credentials from the UI
 
-## 4. Update the Frontend
+- Navigate to **Settings → SMTP**.
+- Enter host, port, sender address, username and password, then click **Save Changes**.
+- The configuration is persisted to `server/data/config.json`.
+- You can clear a stored password with the **Clear** button; leaving the field blank keeps the existing value.
+- Use **Send Test Email** to verify delivery. The request hits `POST /api/email/test` and reports the Nodemailer response.
 
-- Wire the SMTP settings form (currently only UI) to the new backend endpoint.
-- Provide feedback to the user (success/error toast).
-- Consider disabling fields if the backend reports that SMTP is not configured.
+> ⚠️ Passwords are stored in plain text inside `server/data/config.json`. Treat the file as sensitive information and fold it into your secret-management strategy (restrict permissions, mount as a volume, or replace with a dedicated vault).
 
-## 5. Operational Checklist
+## 3. Required runtime variables
 
-- Rate limiting: ensure you respect provider limits.
-- TLS: always prefer secure connections (port 465/587 with STARTTLS).
-- Monitoring: log delivery failures and expose health metrics (e.g., `/api/health` includes SMTP readiness).
-- Testing: use sandboxes (Mailtrap, SendGrid test mode) before production.
+Even with UI-managed settings, the Node process must still expose at least:
 
-Once these steps are complete, the application will be capable of sending emails through your chosen SMTP provider.  
-Until then, any action that suggests “Send email” is purely visual.***
+- `SMTP_HOST` or a stored host value
+- `SMTP_FROM` or a stored from address
+
+Optional variables:
+
+- `SMTP_PORT` (defaults to 587)
+- `SMTP_SECURE` (`true`/`false`)
+- `SMTP_USER`, `SMTP_PASS`
+
+Example Docker run command (values here override anything stored in `.env` or the UI):
+
+```bash
+docker run --rm -p 4000:4000 \
+  -e SMTP_HOST=smtp.example.com \
+  -e SMTP_FROM="noreply@example.com" \
+  -e SMTP_USER="user@example.com" \
+  -e SMTP_PASS="super-secret" \
+  phishing-campaign-simulator
+```
+
+## 4. Production checklist
+
+- **Secret storage:** Avoid committing `config.json`. Mount it as a volume or supply credentials through env vars.
+- **TLS:** Prefer secure connections (`SMTP_SECURE=true` or port 465).
+- **Rate limits:** Respect provider quotas; consider retry logic or background queues for high volume.
+- **Monitoring:** Capture Nodemailer errors in logs; the `GET /api/email/status` endpoint echoes readiness.
+- **Testing:** Use sandbox providers (Mailtrap, SendGrid test mode) before sending to real addresses.
+
+With these steps complete the application can fully send emails through your SMTP provider while giving admins a simple management UI.

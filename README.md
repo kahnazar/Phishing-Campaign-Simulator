@@ -48,9 +48,18 @@ npm run build        # bundles the React app into /build
 npm start            # serves the API and the compiled frontend
 ```
 
+### Environment Variables
+- Copy `.env.example` to `.env` and populate values for local development (`cp .env.example .env`).
+- Key variables:
+  - `PORT` – API + static bundle port (defaults to `4000` if unset).
+  - `JWT_SECRET` – signing key for access tokens (always change from the sample value).
+  - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` – runtime email settings (see [Email Setup](src/documentation/EMAIL_SETUP.md) for full guidance).
+- Settings defined in `.env` are loaded automatically via [`dotenv`](https://www.npmjs.com/package/dotenv). In containerised or production environments prefer platform secret managers or injected env vars over committed files.
+
 ## Authentication
 - Default admin credentials: `admin@company.com` / `admin123`.
 - Tokens are HMAC-signed using `JWT_SECRET` (defaults to `phishlab-dev-secret`). Override it when running the app: `JWT_SECRET=change-me npm start` or `docker run -e JWT_SECRET=change-me …`.
+- When using a `.env` file, set `JWT_SECRET` there before the first launch so the bundled `dotenv` loader can pick it up.
 - Rotate the admin password by replacing the `passwordHash` field for user `admin-1` in `server/data/db.json`. Generate a fresh hash with Node:
   ```bash
   node -e "const { randomBytes, scryptSync } = require('crypto'); const salt = randomBytes(16).toString('hex'); const hash = scryptSync('newStrongPassword', salt, 64).toString('hex'); console.log(`${salt}:${hash}`);"
@@ -58,7 +67,8 @@ npm start            # serves the API and the compiled frontend
 - Only administrators can invite, edit, or remove members in **Team & Roles**; other roles have read-only access.
 
 - **Рабочая SMTP-интеграция:** задействуется через Nodemailer; тестовое письмо можно отправить с вкладки Settings → SMTP.
-- **Переменные окружения** (обязательные): `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`. Если требуется авторизация — добавьте `SMTP_USER` и `SMTP_PASS`. Опция `SMTP_SECURE=true` включает TLS.
+- **Хранение конфигурации:** значения из UI сохраняются в `server/data/config.json`; переменные окружения имеют приоритет и переопределяют файл.
+- **Переменные окружения** (обязательные): `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`. Если требуется авторизация — добавьте `SMTP_USER` и `SMTP_PASS`. Опция `SMTP_SECURE=true` включает TLS. Заполните их в `.env` (или задайте на хостинге) и перезапустите сервер.
 - **API**: `GET /api/email/status` возвращает конфигурацию, `POST /api/email/test` (админ) отправляет тестовый email.
 - **Гайд по настройке:** см. [`src/documentation/EMAIL_SETUP.md`](src/documentation/EMAIL_SETUP.md) — включает чек-лист по безопасному хранению секретов и добавлению SMTP в докер.
 - При сборке контейнера пробрасывайте секреты: `docker run -e SMTP_HOST=smtp.example.com -e SMTP_USER=... -e SMTP_PASS=... -e SMTP_FROM=noreply@example.com …`.
@@ -98,6 +108,8 @@ Base URL: `http://localhost:4000/api`
 | `DELETE` | `/team/:id` | Remove a member. |
 | `GET`  | `/email/status` | SMTP configuration status (admin). |
 | `POST` | `/email/test` | Send a test email using configured SMTP (admin). |
+| `GET`  | `/email/config` | Fetch persisted SMTP configuration (admin). |
+| `PUT`  | `/email/config` | Update persisted SMTP configuration (admin). |
 
 The backend persists data to `server/data/db.json`. Feel free to seed with real integrations or swap to a database when moving beyond prototyping.
 

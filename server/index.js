@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -5,6 +7,17 @@ const fs = require('fs');
 const fsp = require('fs/promises');
 const { randomUUID, scryptSync, timingSafeEqual, createHmac } = require('crypto');
 const { sendTestEmail, getSmtpStatus } = require('./email');
+const { getSmtpConfigForClient, updateSmtpConfig } = require('./config-store');
+const {
+  normalizeRecipientInput,
+  upsertRecipientsInDb,
+  parseCsvRecipients,
+  parseDirectoryText,
+  summarizeImportResult,
+  resolveGoogleSheetCsvUrl,
+  ensureRecipientsArray,
+  createRecipientRecord,
+} = require('./recipients-service');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -305,6 +318,21 @@ app.post('/api/email/test', authenticate, requireRole('Admin'), async (req, res)
   }
 });
 
+app.get('/api/email/config', authenticate, requireRole('Admin'), (_req, res) => {
+  res.json(getSmtpConfigForClient());
+});
+
+app.put('/api/email/config', authenticate, requireRole('Admin'), async (req, res) => {
+  try {
+    const { host, port, secure, user, pass, from } = req.body || {};
+    const updated = updateSmtpConfig({ host, port, secure, user, pass, from });
+    res.json(updated);
+  } catch (error) {
+    console.error('Failed to update SMTP config', error);
+    res.status(400).json({ message: error instanceof Error ? error.message : 'Failed to update SMTP configuration' });
+  }
+});
+
 app.get('/api/templates', authenticate, async (_req, res, next) => {
   try {
     const db = await readDb();
@@ -398,6 +426,141 @@ app.get('/api/recipients', authenticate, async (_req, res, next) => {
   try {
     const db = await readDb();
     res.json(db.recipients);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/recipients', authenticate, requireRole('Admin'), async (req, res, next) => {
+  try {
+    const normalized = normalizeRecipientInput(req.body);
+    if (!normalized) {
+      return res.status(400).json({ message: 'Valid name and email are required' });
+    }
+
+    const db = await readDb();
+    ensureRecipientsArray(db);
+
+    const exists = db.recipients.some(
+      (recipient) => recipient.email.toLowerCase() === normalized.email
+    );
+    if (exists) {
+      return res.status(409).json({ message: 'Recipient with this email already exists' });
+    }
+
+    const record = createRecipientRecord(normalized);
+    db.recipients.push(record);
+
+    await writeDb(db);
+    res.status(201).json(record);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/recipients/import/csv', authenticate, requireRole('Admin'), async (req, res, next) => {
+  try {
+    const { csv, updateExisting = true } = req.body || {};
+    if (!csv || typeof csv !== 'string') {
+      return res.status(400).json({ message: 'CSV content is required' });
+    }
+
+    let normalized;
+    try {
+      normalized = parseCsvRecipients(csv);
+    } catch (error) {
+      console.error('Failed to parse CSV import', error);
+      return res.status(400).json({ message: 'Unable to parse CSV data' });
+    }
+
+    if (!normalized.length) {
+      return res.status(400).json({ message: 'No valid recipient rows found in CSV' });
+    }
+
+    const db = await readDb();
+    const result = upsertRecipientsInDb(db, normalized, { updateExisting: Boolean(updateExisting) });
+    await writeDb(db);
+
+    res.json({
+      source: 'csv',
+      ...summarizeImportResult(result),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/recipients/import/google', authenticate, requireRole('Admin'), async (req, res, next) => {
+  try {
+    const { sheetUrl, updateExisting = true } = req.body || {};
+    const csvUrl = resolveGoogleSheetCsvUrl(sheetUrl);
+    if (!csvUrl) {
+      return res.status(400).json({ message: 'Provide a valid Google Sheets share link' });
+    }
+
+    let csvText;
+    try {
+      const response = await fetch(csvUrl);
+      if (!response.ok) {
+        const message = response.status === 403 ? 'Google Sheet is not publicly accessible' : 'Failed to download Google Sheet';
+        return res.status(400).json({ message });
+      }
+      csvText = await response.text();
+    } catch (error) {
+      console.error('Failed to fetch Google Sheet CSV', error);
+      return res.status(400).json({ message: 'Unable to fetch Google Sheet. Ensure it is shared publicly.' });
+    }
+
+    let normalized;
+    try {
+      normalized = parseCsvRecipients(csvText);
+    } catch (error) {
+      console.error('Failed to parse Google Sheet CSV', error);
+      return res.status(400).json({ message: 'Unable to parse data from Google Sheet' });
+    }
+
+    if (!normalized.length) {
+      return res.status(400).json({ message: 'Google Sheet did not contain any valid rows' });
+    }
+
+    const db = await readDb();
+    const result = upsertRecipientsInDb(db, normalized, { updateExisting: Boolean(updateExisting) });
+    await writeDb(db);
+
+    res.json({
+      source: 'google_sheets',
+      csvUrl,
+      ...summarizeImportResult(result),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/recipients/import/directory', authenticate, requireRole('Admin'), async (req, res, next) => {
+  try {
+    const { entries, text, updateExisting = true } = req.body || {};
+
+    const normalizedFromText = typeof text === 'string' ? parseDirectoryText(text) : [];
+    const normalizedFromEntries = Array.isArray(entries)
+      ? entries
+          .map((entry) => normalizeRecipientInput(entry))
+          .filter((item) => item && item.email)
+      : [];
+
+    const combined = [...normalizedFromText, ...normalizedFromEntries];
+    if (!combined.length) {
+      return res.status(400).json({ message: 'No valid directory entries provided' });
+    }
+
+    const db = await readDb();
+    const result = upsertRecipientsInDb(db, combined, { updateExisting: Boolean(updateExisting) });
+    await writeDb(db);
+
+    res.json({
+      source: 'directory',
+      ...summarizeImportResult(result),
+    });
   } catch (error) {
     next(error);
   }

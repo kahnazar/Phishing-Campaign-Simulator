@@ -181,7 +181,7 @@ export function CampaignsView({ onNavigate }: CampaignsViewProps) {
                           {campaign.template}
                         </span>
                         <span>•</span>
-                        <span>{campaign.recipients} {t.recipients}</span>
+                        <span>{campaign.recipients} {t.recipientCountLabel}</span>
                         {campaign.scheduledAt && (
                           <>
                             <span>•</span>
