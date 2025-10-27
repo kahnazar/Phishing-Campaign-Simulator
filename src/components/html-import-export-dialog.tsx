@@ -143,7 +143,7 @@ export function HtmlImportExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="flex max-h-[80vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>Import / Export HTML</DialogTitle>
           <DialogDescription>
@@ -163,13 +163,14 @@ export function HtmlImportExportDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="import" className="space-y-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Upload HTML File</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="file"
+          <TabsContent value="import" className="flex flex-1 flex-col">
+            <ScrollArea className="max-h-[52vh] pr-4">
+              <div className="space-y-4 pr-1 pb-4">
+                <div className="space-y-2">
+                  <Label>Upload HTML File</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
                     accept=".html,.htm"
                     onChange={handleFileUpload}
                     className="hidden"
@@ -229,7 +230,9 @@ export function HtmlImportExportDialog({
               </div>
             </div>
 
-            <DialogFooter>
+            </ScrollArea>
+
+            <DialogFooter className="mt-4">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
@@ -240,13 +243,14 @@ export function HtmlImportExportDialog({
             </DialogFooter>
           </TabsContent>
 
-          <TabsContent value="export" className="space-y-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Current Template HTML</Label>
-                  <Button
-                    size="sm"
+          <TabsContent value="export" className="flex flex-1 flex-col">
+            <ScrollArea className="max-h-[52vh] pr-4">
+              <div className="space-y-4 pr-1 pb-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Current Template HTML</Label>
+                    <Button
+                      size="sm"
                     variant="outline"
                     onClick={handleCopyToClipboard}
                   >
@@ -302,9 +306,10 @@ export function HtmlImportExportDialog({
                   clients before sending to ensure compatibility.
                 </p>
               </div>
-            </div>
+              </div>
+            </ScrollArea>
 
-            <DialogFooter>
+            <DialogFooter className="mt-4">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close
               </Button>

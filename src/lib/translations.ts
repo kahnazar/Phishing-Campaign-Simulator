@@ -9,7 +9,6 @@ export interface Translations {
   reports: string;
   settings: string;
   team: string;
-  training: string;
   
   // Common
   search: string;
@@ -241,7 +240,6 @@ export const translations: Record<Language, Translations> = {
     reports: 'Reports',
     settings: 'Settings',
     team: 'Team & Roles',
-    training: 'Training',
     
     // Common
     search: 'Search',
@@ -472,7 +470,6 @@ export const translations: Record<Language, Translations> = {
     reports: 'Отчёты',
     settings: 'Настройки',
     team: 'Команда и роли',
-    training: 'Обучение',
     
     // Common
     search: 'Поиск',
@@ -703,7 +700,6 @@ export const translations: Record<Language, Translations> = {
     reports: 'Hisobotlar',
     settings: 'Sozlamalar',
     team: 'Jamoa va rollar',
-    training: "O'qitish",
     
     // Common
     search: 'Qidirish',

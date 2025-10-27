@@ -55,8 +55,6 @@ function AuthenticatedApp() {
         return <SettingsView onNavigate={handleNavigate} />;
       case "team":
         return <TeamView onNavigate={handleNavigate} />;
-      case "training":
-        return <DashboardView onNavigate={handleNavigate} />;
       default:
         return <DashboardView onNavigate={handleNavigate} />;
     }

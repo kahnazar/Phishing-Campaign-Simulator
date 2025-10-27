@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -26,6 +26,13 @@ import { useAppData } from "../lib/app-data-context";
 import type { Recipient } from "../types";
 import { toast } from "sonner@2.0.3";
 import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import {
   Dialog,
   DialogContent,
@@ -75,13 +82,66 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
   const [importing, setImporting] = useState(false);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [directoryText, setDirectoryText] = useState("");
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [filters, setFilters] = useState({ department: 'all', risk: 'all' });
+  const [draftFilters, setDraftFilters] = useState({ department: 'all', risk: 'all' });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const filteredRecipients = recipients.filter(r =>
-    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.department.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const departments = Array.from(
+    new Set(recipients.map((recipient) => recipient.department).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b));
+
+  const getRiskBucket = (recipient: Recipient) => {
+    const numeric = parseInt(String(recipient.clickRate).replace('%', ''), 10);
+    if (Number.isNaN(numeric)) {
+      return 'low';
+    }
+    if (numeric > 40) {
+      return 'high';
+    }
+    if (numeric > 25) {
+      return 'medium';
+    }
+    return 'low';
+  };
+
+  const filteredRecipients = recipients
+    .filter((recipient) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        recipient.name.toLowerCase().includes(query) ||
+        recipient.email.toLowerCase().includes(query) ||
+        recipient.department.toLowerCase().includes(query)
+      );
+    })
+    .filter((recipient) => {
+      return filters.department === 'all' || recipient.department === filters.department;
+    })
+    .filter((recipient) => {
+      return filters.risk === 'all' || getRiskBucket(recipient) === filters.risk;
+    });
+
+  useEffect(() => {
+    if (filterDialogOpen) {
+      setDraftFilters(filters);
+    }
+  }, [filterDialogOpen, filters]);
+
+  const filtersActive = filters.department !== 'all' || filters.risk !== 'all';
+
+  const handleApplyFilters = () => {
+    setFilters(draftFilters);
+    setFilterDialogOpen(false);
+    toast.success('Filters updated');
+  };
+
+  const handleResetFilters = () => {
+    const reset = { department: 'all', risk: 'all' };
+    setFilters(reset);
+    setDraftFilters(reset);
+    setFilterDialogOpen(false);
+    toast.success('Filters cleared');
+  };
 
   const toggleRecipient = (id: string) => {
     setSelectedRecipients(prev =>
@@ -356,7 +416,11 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
           <div className="flex items-center justify-between">
             <CardTitle>All Recipients</CardTitle>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button
+                variant={filtersActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterDialogOpen(true)}
+              >
                 <Filter className="mr-2 size-4" />
                 Filter
               </Button>
@@ -515,6 +579,66 @@ export function RecipientsView({ onNavigate }: RecipientsViewProps) {
       </Card>
         </div>
       </div>
+
+      <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filter recipients</DialogTitle>
+            <DialogDescription>
+              Narrow the list by department or risk level. You can combine filters with the search box.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="filter-department">Department</Label>
+              <Select
+                value={draftFilters.department}
+                onValueChange={(value) => setDraftFilters((prev) => ({ ...prev, department: value }))}
+              >
+                <SelectTrigger id="filter-department">
+                  <SelectValue placeholder="All departments" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All departments</SelectItem>
+                  {departments.map((department) => (
+                    <SelectItem key={department} value={department}>
+                      {department}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="filter-risk">Risk level</Label>
+              <Select
+                value={draftFilters.risk}
+                onValueChange={(value) => setDraftFilters((prev) => ({ ...prev, risk: value }))}
+              >
+                <SelectTrigger id="filter-risk">
+                  <SelectValue placeholder="All risk levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All risk levels</SelectItem>
+                  <SelectItem value="high">High (&gt; 40% click rate)</SelectItem>
+                  <SelectItem value="medium">Medium (26-40%)</SelectItem>
+                  <SelectItem value="low">Low (&le; 25%)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setFilterDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="outline" onClick={handleResetFilters}>
+              Reset
+            </Button>
+            <Button onClick={handleApplyFilters}>
+              Apply Filters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>

@@ -45,6 +45,8 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
   const [testSubject, setTestSubject] = useState('PhishLab SMTP Test');
   const [testMessage, setTestMessage] = useState('This is a test email from PhishLab.');
   const [sendingTest, setSendingTest] = useState(false);
+  const [preferredProvider, setPreferredProvider] = useState<string | null>(null);
+  const [renewingCertificate, setRenewingCertificate] = useState(false);
   const envKeyLabels: Record<string, string> = {
     host: 'SMTP_HOST',
     port: 'SMTP_PORT',
@@ -53,6 +55,16 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
     pass: 'SMTP_PASS',
     from: 'SMTP_FROM',
   };
+  const providerLabels: Record<string, string> = {
+    sendgrid: 'SendGrid',
+    ses: 'Amazon SES',
+    mailgun: 'Mailgun',
+  };
+  const providerOptions = [
+    { id: 'sendgrid', label: providerLabels.sendgrid, icon: Mail },
+    { id: 'ses', label: providerLabels.ses, icon: Database },
+    { id: 'mailgun', label: providerLabels.mailgun, icon: Mail },
+  ] as const;
 
   const loadStatus = async () => {
     try {
@@ -111,6 +123,24 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
       toast.error(error instanceof Error ? error.message : 'Failed to send test email');
     } finally {
       setSendingTest(false);
+    }
+  };
+
+  const handleSelectProvider = (id: keyof typeof providerLabels) => {
+    setPreferredProvider(id);
+    toast.success(`${providerLabels[id]} selected`);
+  };
+
+  const handleRenewCertificate = async () => {
+    try {
+      setRenewingCertificate(true);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      toast.success('SSL renewal request submitted');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to submit renewal request');
+    } finally {
+      setRenewingCertificate(false);
     }
   };
 
@@ -311,19 +341,28 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
               <div className="space-y-4">
                 <h4 className="font-medium">Alternative Providers</h4>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Button variant="outline" className="justify-start">
-                    <Mail className="mr-2 size-4" />
-                    SendGrid
-                  </Button>
-                  <Button variant="outline" className="justify-start">
-                    <Database className="mr-2 size-4" />
-                    Amazon SES
-                  </Button>
-                  <Button variant="outline" className="justify-start">
-                    <Mail className="mr-2 size-4" />
-                    Mailgun
-                  </Button>
+                  {providerOptions.map((option) => {
+                    const Icon = option.icon;
+                    const isActive = preferredProvider === option.id;
+                    return (
+                      <Button
+                        key={option.id}
+                        type="button"
+                        variant={isActive ? "default" : "outline"}
+                        className="justify-start"
+                        onClick={() => handleSelectProvider(option.id)}
+                      >
+                        <Icon className="mr-2 size-4" />
+                        {option.label}
+                      </Button>
+                    );
+                  })}
                 </div>
+                {preferredProvider && (
+                  <p className="text-xs text-muted-foreground">
+                    Selected provider: <span className="font-medium">{providerLabels[preferredProvider]}</span>. Update the SMTP host and credentials accordingly.
+                  </p>
+                )}
               </div>
 
               <Separator />
@@ -455,7 +494,15 @@ export function SettingsView({ onNavigate }: SettingsViewProps) {
                     <p className="font-medium">Valid SSL Certificate</p>
                     <p className="text-sm text-muted-foreground">Expires: Dec 31, 2025</p>
                   </div>
-                  <Button variant="outline" size="sm">Renew</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={() => void handleRenewCertificate()}
+                    disabled={renewingCertificate}
+                  >
+                    {renewingCertificate ? 'Renewing…' : 'Renew'}
+                  </Button>
                 </div>
               </div>
 

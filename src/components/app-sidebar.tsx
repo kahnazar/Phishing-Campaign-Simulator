@@ -6,7 +6,6 @@ import {
   BarChart3,
   Settings,
   Shield,
-  BookOpen,
   LogOut,
 } from "lucide-react";
 import {
@@ -36,10 +35,9 @@ export function AppSidebar({ currentView, onNavigate }: AppSidebarProps) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "Admin";
-  const filteredSettings = [
+  const managementItems = [
     { title: t.settings, icon: Settings, id: "settings" },
     ...(isAdmin ? [{ title: t.team, icon: Shield, id: "team" } as const] : []),
-    { title: t.training, icon: BookOpen, id: "training" },
   ];
 
   const initials = (user?.name || user?.email || "?")
@@ -96,7 +94,7 @@ export function AppSidebar({ currentView, onNavigate }: AppSidebarProps) {
           <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filteredSettings.map((item) => (
+              {managementItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     isActive={currentView === item.id}

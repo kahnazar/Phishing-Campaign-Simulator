@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { 
   Mail, 
@@ -22,6 +23,15 @@ import {
 import { useTranslation } from "../lib/i18n";
 import { useAppData } from "../lib/app-data-context";
 import { toast } from "sonner@2.0.3";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import type { Campaign } from "../types";
 
 interface ReportsViewProps {
   onNavigate: (view: string) => void;
@@ -30,6 +40,8 @@ interface ReportsViewProps {
 export function ReportsView({ onNavigate }: ReportsViewProps) {
   const { t } = useTranslation();
   const { campaigns, loading } = useAppData();
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const totalSent = campaigns.reduce((sum, c) => sum + c.sent, 0);
   const totalOpened = campaigns.reduce((sum, c) => sum + c.opened, 0);
   const totalClicked = campaigns.reduce((sum, c) => sum + c.clicked, 0);
@@ -126,6 +138,32 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
     toast.success('Campaign report exported');
   };
 
+  const getCampaignRates = (campaign: Campaign) => {
+    const sent = campaign.sent || campaign.recipients || 0;
+    if (!sent) {
+      return { open: 0, click: 0, submit: 0 };
+    }
+    return {
+      open: Math.round((campaign.opened / sent) * 100),
+      click: Math.round((campaign.clicked / sent) * 100),
+      submit: Math.round((campaign.submitted / sent) * 100),
+    };
+  };
+
+  const handleViewDetails = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleOpenInCampaigns = () => {
+    if (selectedCampaign) {
+      onNavigate('campaigns', { campaignId: selectedCampaign.id });
+    } else {
+      onNavigate('campaigns');
+    }
+    setDetailsDialogOpen(false);
+  };
+
   return (
     <>
       {/* Fixed Header */}
@@ -205,15 +243,7 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
               </TableHeader>
               <TableBody>
                 {campaigns.map((campaign) => {
-                  const openRate = campaign.sent > 0 
-                    ? ((campaign.opened / campaign.sent) * 100).toFixed(0) 
-                    : '0';
-                  const clickRate = campaign.sent > 0 
-                    ? ((campaign.clicked / campaign.sent) * 100).toFixed(0) 
-                    : '0';
-                  const submitRate = campaign.sent > 0 
-                    ? ((campaign.submitted / campaign.sent) * 100).toFixed(0) 
-                    : '0';
+                  const rates = getCampaignRates(campaign);
 
                   return (
                     <TableRow key={campaign.id}>
@@ -240,29 +270,29 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-sm">
-                            <span>{openRate}%</span>
+                            <span>{rates.open}%</span>
                           </div>
-                          <Progress value={parseInt(openRate)} className="h-1.5" />
+                          <Progress value={rates.open} className="h-1.5" />
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-sm">
-                            <span>{clickRate}%</span>
+                            <span>{rates.click}%</span>
                           </div>
-                          <Progress value={parseInt(clickRate)} className="h-1.5" />
+                          <Progress value={rates.click} className="h-1.5" />
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-sm">
-                            <span>{submitRate}%</span>
+                            <span>{rates.submit}%</span>
                           </div>
-                          <Progress value={parseInt(submitRate)} className="h-1.5" />
+                          <Progress value={rates.submit} className="h-1.5" />
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(campaign)}>
                           View Details
                         </Button>
                       </TableCell>
@@ -343,6 +373,81 @@ export function ReportsView({ onNavigate }: ReportsViewProps) {
       </div>
         </div>
       </div>
+
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedCampaign?.name || 'Campaign details'}</DialogTitle>
+            <DialogDescription>
+              {selectedCampaign?.template || 'Detailed performance metrics'}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCampaign && (
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <p className="text-xs text-muted-foreground">Recipients</p>
+                  <p className="text-lg font-semibold">{selectedCampaign.recipients}</p>
+                </div>
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <Badge variant="outline">{selectedCampaign.status}</Badge>
+                </div>
+              </div>
+              {(() => {
+                const rates = getCampaignRates(selectedCampaign);
+                return (
+                  <div className="space-y-4">
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-sm">
+                        <span>Open Rate</span>
+                        <span className="font-medium">{rates.open}%</span>
+                      </div>
+                      <Progress value={rates.open} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-sm">
+                        <span>Click Rate</span>
+                        <span className="font-medium">{rates.click}%</span>
+                      </div>
+                      <Progress value={rates.click} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-sm">
+                        <span>Data Submissions</span>
+                        <span className="font-medium">{rates.submit}%</span>
+                      </div>
+                      <Progress value={rates.submit} className="h-2" />
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                <p>
+                  Sent emails: <span className="font-medium text-foreground">{selectedCampaign.sent}</span>
+                </p>
+                <p>
+                  Opened: <span className="font-medium text-foreground">{selectedCampaign.opened}</span>
+                </p>
+                <p>
+                  Clicked: <span className="font-medium text-foreground">{selectedCampaign.clicked}</span>
+                </p>
+                <p>
+                  Submitted: <span className="font-medium text-foreground">{selectedCampaign.submitted}</span>
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDetailsDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={handleOpenInCampaigns}>
+              Open in Campaigns
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
