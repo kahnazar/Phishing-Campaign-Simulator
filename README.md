@@ -66,6 +66,7 @@ npm start            # serves the API and the compiled frontend
   ```
 - Only administrators can invite, edit, or remove members in **Team & Roles**; other roles have read-only access.
 
+## SMTP integration
 - **Operational SMTP integration:** powered by Nodemailer; send a test email from Settings → SMTP.
 - **Configuration storage:** UI values persist in `server/data/config.json`; environment variables override the file when present.
 - **Environment variables** (required): `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`. Add `SMTP_USER` and `SMTP_PASS` when authentication is needed. `SMTP_SECURE=true` enables TLS. Populate them in `.env` (or via hosting platform) and restart the server.
