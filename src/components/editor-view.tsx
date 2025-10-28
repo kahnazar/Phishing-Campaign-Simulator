@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Card, CardContent } from "./ui/card";
@@ -34,6 +34,7 @@ import { Textarea } from "./ui/textarea";
 import { toast } from "sonner@2.0.3";
 import { ImagePickerDialog } from "./image-picker-dialog";
 import { HtmlImportExportDialog } from "./html-import-export-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface EditorViewProps {
   template?: any;
@@ -74,10 +75,22 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [htmlDialogOpen, setHtmlDialogOpen] = useState(false);
-  const [customHtml, setCustomHtml] = useState<string | null>((template as any)?.customHtml || null);
+const [customHtml, setCustomHtml] = useState<string | null>((template as any)?.customHtml || null);
+const [tags, setTags] = useState<string[]>(Array.isArray((template as any)?.tags) && (template as any)?.tags.length
+  ? (template as any)?.tags
+  : ['Security', 'Password', 'Urgent']);
+const [addingTag, setAddingTag] = useState(false);
+const [tagInput, setTagInput] = useState('');
+const tagInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [blocks, setBlocks] = useState<Block[]>([
-    { id: '1', type: 'header', content: 'Company Logo' },
+  useEffect(() => {
+    if (addingTag && tagInputRef.current) {
+      tagInputRef.current.focus();
+    }
+  }, [addingTag]);
+
+const [blocks, setBlocks] = useState<Block[]>([
+  { id: '1', type: 'header', content: 'Company Logo' },
     { id: '2', type: 'hero', content: 'Hero Image', imageUrl: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&q=80' },
     { id: '3', type: 'text', content: 'Dear {{FirstName}},\n\nYour password will expire in 24 hours. Please reset it immediately to maintain access to your account.', alignment: 'left' },
     { id: '4', type: 'button', content: 'Reset Password Now', alignment: 'center' },
@@ -161,6 +174,37 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
     }
   };
 
+  const handleAddTag = () => {
+    const value = tagInput.trim();
+    if (!value) {
+      toast.error('Введите название тега');
+      return;
+    }
+    if (tags.includes(value)) {
+      toast.error('Такой тег уже добавлен');
+      return;
+    }
+    setTags((prev) => [...prev, value]);
+    toast.success('Тег добавлен');
+    setTagInput('');
+    setAddingTag(false);
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags((prev) => prev.filter((item) => item !== tag));
+    toast.success('Тег удалён');
+  };
+
+  const handleTagKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleAddTag();
+    } else if (event.key === 'Escape') {
+      setAddingTag(false);
+      setTagInput('');
+    }
+  };
+
   const insertMergeTag = (tag: string) => {
     const block = blocks.find(b => b.id === selectedBlock);
     if (block && (block.type === 'text' || block.type === 'button')) {
@@ -186,6 +230,17 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
 <body>
   <div class="email-container">
 `;
+
+    if (tags.length) {
+      html += `    <div style="padding: 12px 24px; font-size: 12px; color: #6b7280; background-color: #f9fafb;">
+      Tags: ${tags
+        .map(
+          (tag) =>
+            `<span style="display:inline-block;margin-right:8px;margin-bottom:4px;padding:4px 10px;border-radius:9999px;background:#e5e7eb;color:#111827;">${tag}</span>`
+        )
+        .join(' ')}
+    </div>\n`;
+    }
 
     blocks.forEach(block => {
       switch (block.type) {
@@ -700,14 +755,52 @@ export function EditorView({ template, onNavigate }: EditorViewProps) {
             <div className="space-y-2">
               <Label>Template Tags</Label>
               <div className="flex flex-wrap gap-1">
-                <Badge variant="secondary">Security</Badge>
-                <Badge variant="secondary">Password</Badge>
-                <Badge variant="secondary">Urgent</Badge>
+                {tags.map((tag) => (
+                  <TooltipProvider key={tag}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="secondary"
+                          className="flex cursor-pointer items-center gap-1"
+                          onClick={() => handleRemoveTag(tag)}
+                        >
+                          {tag}
+                          <X className="size-3 opacity-70" />
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Remove tag</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
               </div>
-              <Button variant="outline" size="sm" className="w-full">
-                <Plus className="mr-2 size-3" />
-                Add Tag
-              </Button>
+              {addingTag ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    ref={tagInputRef}
+                    value={tagInput}
+                    placeholder="New tag"
+                    onChange={(event) => setTagInput(event.target.value)}
+                    onKeyDown={handleTagKeyDown}
+                    className="flex-1"
+                  />
+                  <Button size="sm" onClick={handleAddTag}>
+                    Add
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setAddingTag(false); setTagInput(''); }}>
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setAddingTag(true)}
+                >
+                  <Plus className="mr-2 size-3" />
+                  Add Tag
+                </Button>
+              )}
             </div>
 
             <Separator />

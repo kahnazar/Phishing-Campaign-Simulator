@@ -1,28 +1,10 @@
-FROM node:20-slim AS builder
-WORKDIR /app
-
-# Install dependencies for building the client bundle
-COPY package*.json ./
-RUN npm ci
-
-# Copy the rest of the application source and build the client
-COPY . .
-RUN npm run build
-
-
-FROM node:20-slim AS runner
+FROM node:lts-alpine
 ENV NODE_ENV=production
-WORKDIR /app
-
-# Install only production dependencies for the server
-COPY --chown=node:node package*.json ./
-RUN npm ci --omit=dev
-
-# Copy built client assets and server files
-COPY --from=builder /app/build ./build
-COPY --chown=node:node server ./server
-
-# Run the API + static file server
-USER node
+WORKDIR /usr/src/app
+COPY ["package.json", "package-lock.json*", "npm-shrinkwrap.json*", "./"]
+RUN npm install --production --silent && mv node_modules ../
+COPY . .
 EXPOSE 4000
-CMD ["node", "server/index.js"]
+RUN chown -R node /usr/src/app
+USER node
+CMD ["npm", "start"]
