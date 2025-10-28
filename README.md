@@ -66,21 +66,20 @@ npm start            # serves the API and the compiled frontend
   ```
 - Only administrators can invite, edit, or remove members in **Team & Roles**; other roles have read-only access.
 
-## SMTP integration
-- **Operational SMTP integration:** powered by Nodemailer; send a test email from Settings → SMTP.
-- **Configuration storage:** UI values persist in `server/data/config.json`; environment variables override the file when present.
-- **Environment variables** (required): `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`. Add `SMTP_USER` and `SMTP_PASS` when authentication is needed. `SMTP_SECURE=true` enables TLS. Populate them in `.env` (or via hosting platform) and restart the server.
-- **API:** `GET /api/email/status` returns configuration details, `POST /api/email/test` (admin) triggers a test email.
-- **Setup guide:** see [`src/documentation/EMAIL_SETUP.md`](src/documentation/EMAIL_SETUP.md) for secure secret management and Docker considerations.
-- When running in Docker, supply secrets explicitly: `docker run -e SMTP_HOST=smtp.example.com -e SMTP_USER=... -e SMTP_PASS=... -e SMTP_FROM=noreply@example.com …`.
+- **Рабочая SMTP-интеграция:** задействуется через Nodemailer; тестовое письмо можно отправить с вкладки Settings → SMTP.
+- **Хранение конфигурации:** значения из UI сохраняются в `server/data/config.json`; переменные окружения имеют приоритет и переопределяют файл.
+- **Переменные окружения** (обязательные): `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`. Если требуется авторизация — добавьте `SMTP_USER` и `SMTP_PASS`. Опция `SMTP_SECURE=true` включает TLS. Заполните их в `.env` (или задайте на хостинге) и перезапустите сервер.
+- **API**: `GET /api/email/status` возвращает конфигурацию, `POST /api/email/test` (админ) отправляет тестовый email.
+- **Гайд по настройке:** см. [`src/documentation/EMAIL_SETUP.md`](src/documentation/EMAIL_SETUP.md) — включает чек-лист по безопасному хранению секретов и добавлению SMTP в докер.
+- При сборке контейнера пробрасывайте секреты: `docker run -e SMTP_HOST=smtp.example.com -e SMTP_USER=... -e SMTP_PASS=... -e SMTP_FROM=noreply@example.com …`.
 
 ## Docker
 - Multi-stage image with dependency, build, and production targets (`Dockerfile`).
 - **Build image**: `docker build -t phishing-campaign-simulator .`
 - **Run container**: `docker run --rm -p 4000:4000 --env-file .env phishing-campaign-simulator`
 - **Persistent data (volume)**: `docker run --rm -p 4000:4000 -v phishlab-data:/app/server/data --env-file .env phishing-campaign-simulator`
-- Image serves API and static frontend on `http://localhost:4000`.
-> **Tip:** regenerate the Docker image after any code change; all dependencies and build artefacts are produced in the builder stage to keep the final image lean.
+- **Русский (кратко)**: Соберите образ (`docker build ...`), затем запустите контейнер (`docker run ...`), при необходимости подключив volume для папки `/app/server/data`, чтобы базы и настройки сохранялись между перезапусками.
+- Контейнер обслуживает API и статический фронтенд на `http://localhost:4000`.
 
 ### Scripts Summary
 | Script | Description |
@@ -132,6 +131,11 @@ Key providers:
 ## Internationalisation
 Translations are defined in `src/lib/translations.ts` and accessed via `useTranslation()`.  
 Language preference is stored under `localStorage['phishlab-language']`.
+
+## Documentation
+- [`src/documentation/PRODUCT_OVERVIEW.md`](src/documentation/PRODUCT_OVERVIEW.md) – архитектура, роли, модули, деплой.
+- [`src/documentation/BACKEND_API.md`](src/documentation/BACKEND_API.md) – детальная спецификация REST API.
+- [`src/documentation/EMAIL_SETUP.md`](src/documentation/EMAIL_SETUP.md) – SMTP настройка и безопасность.
 
 ## Contributing & Maintenance Tips
 - Keep backend routes in `server/index.js`. When adding new resources, mirror them in the API client and expose mutations via `AppDataContext`.
