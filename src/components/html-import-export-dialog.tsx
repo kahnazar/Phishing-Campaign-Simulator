@@ -164,13 +164,12 @@ export function HtmlImportExportDialog({
           </TabsList>
 
           <TabsContent value="import" className="flex flex-1 flex-col">
-            <ScrollArea className="max-h-[52vh] pr-4">
-              <div className="space-y-4 pr-1 pb-4">
-                <div className="space-y-2">
-                  <Label>Upload HTML File</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="file"
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
+              <div className="space-y-2">
+                <Label>Upload HTML File</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
                     accept=".html,.htm"
                     onChange={handleFileUpload}
                     className="hidden"
@@ -200,13 +199,15 @@ export function HtmlImportExportDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="html-code">HTML Code</Label>
-                <Textarea
-                  id="html-code"
-                  value={htmlCode}
-                  onChange={(e) => setHtmlCode(e.target.value)}
-                  placeholder="<html>&#10;  <head>&#10;    <title>Email Template</title>&#10;  </head>&#10;  <body>&#10;    <!-- Your email content -->&#10;  </body>&#10;</html>"
-                  className="min-h-[300px] font-mono text-sm"
-                />
+                <div className="rounded-lg border">
+                  <Textarea
+                    id="html-code"
+                    value={htmlCode}
+                    onChange={(e) => setHtmlCode(e.target.value)}
+                    placeholder="<html>&#10;  <head>&#10;    <title>Email Template</title>&#10;  </head>&#10;  <body>&#10;    <!-- Your email content -->&#10;  </body>&#10;</html>"
+                    className="h-[320px] w-full overflow-auto border-0 font-mono text-sm focus-visible:ring-0 resize-none min-h-0 md:h-[403px]"
+                  />
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Paste your complete HTML email template here
                 </p>
@@ -230,9 +231,7 @@ export function HtmlImportExportDialog({
               </div>
             </div>
 
-            </ScrollArea>
-
-            <DialogFooter className="mt-4">
+            <DialogFooter className="mt-4 shrink-0">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
@@ -244,13 +243,12 @@ export function HtmlImportExportDialog({
           </TabsContent>
 
           <TabsContent value="export" className="flex flex-1 flex-col">
-            <ScrollArea className="max-h-[52vh] pr-4">
-              <div className="space-y-4 pr-1 pb-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Current Template HTML</Label>
-                    <Button
-                      size="sm"
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto pr-1">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Current Template HTML</Label>
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={handleCopyToClipboard}
                   >
@@ -306,10 +304,9 @@ export function HtmlImportExportDialog({
                   clients before sending to ensure compatibility.
                 </p>
               </div>
-              </div>
-            </ScrollArea>
+            </div>
 
-            <DialogFooter className="mt-4">
+            <DialogFooter className="mt-4 shrink-0">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Close
               </Button>
