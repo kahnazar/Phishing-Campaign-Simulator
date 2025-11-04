@@ -4,19 +4,46 @@
 Full-stack training platform for planning, launching, and analysing phishing simulation campaigns.  
 The UI is inspired by the [original Figma design](https://www.figma.com/design/QUQijTai5JB0M5ePh9VBtN/Phishing-Campaign-Simulator) and backed by a lightweight Node.js API so the app runs end to end out of the box.
 
+## Quick Links
+- [Product Overview](src/documentation/PRODUCT_OVERVIEW.md)
+- [Backend API Specification](src/documentation/BACKEND_API.md)
+- [SMTP / Email Setup](src/documentation/EMAIL_SETUP.md)
+
 ## Features
-- **Dashboard analytics** – consolidated campaign KPIs with quick actions.
-- **Template library & editor** – browse ready-made lures, upload HTML, or customise via block-based editor.
-- **Campaign builder** – guided 4-step flow to configure templates, recipients, schedules, and launch.
-- **Recipient management** – mock directory with group/risk insights and import/export stubs.
-- **Reports** – campaign performance tables and trend widgets.
-- **Team management** – invite members, manage roles, edit/remove users.
+
+- **Dashboard analytics** – Consolidated KPIs with shortcuts to build or duplicate campaigns.
+- **Template library & editor**
+  - Drag-and-drop content blocks with inline editing.
+  - Scrollable HTML import/export dialog sized consistently for all screens.
+  - Tag management and merge tags injected into generated HTML.
+- **Campaign builder** – Guided 4-step flow to select templates, recipients, scheduling, and review before launch.
+- **Recipient management**
+  - CSV upload with server-side parsing and validation.
+  - Google Sheets ingestion (public CSV export) and directory text parsing.
+  - Filter dialog (department/risk), search, inline add/remove, CSV export of current view.
+- **Reports** – Campaign performance table, detail modal with metrics breakdown, one-click CSV export.
+- **Team management** – Role-based access (Admin/Manager/Viewer), invite, edit, remove.
+- **SMTP & notifications** – Provider presets (SendGrid, SES, Mailgun), test send, status refresh, SSL renew simulation.
 - **Internationalisation** – English, Russian, and Uzbek translations with persistent language choice.
 
 ## Tech Stack
 - **Frontend**: React 18, Vite, TypeScript, Radix UI primitives, Tailwind‑style utility classes.
 - **Backend**: Node.js (Express), CORS, JSON datastore (`server/data/db.json`).
 - **Supporting libs**: `sonner` for toasts, `react-dnd` for the email editor, `lucide-react` icons.
+
+## Key Workflows
+1. **Configure SMTP**
+   - Fill in Settings → SMTP (UI stores values in `server/data/config.json`).
+   - Environment variables override stored credentials; UI indicates overrides.
+   - Send a test email and renew SSL (mock) directly from the panel.
+2. **Design Templates**
+   - Use block editor for visual authoring or import HTML in the dialog (scrollable textarea, tips panel, persistent footer).
+   - Manage tags inline (add/remove) and they are embedded into exported HTML.
+3. **Build Campaigns**
+   - Choose template, recipients (import CSV/Sheets/directory), schedule, and confirm.
+   - Campaign metrics update automatically on Dashboard and Reports.
+4. **Monitor & Export**
+   - Review campaign table, open detail modal for specific metrics, export CSV for analysis.
 
 ## Getting Started
 
@@ -79,7 +106,8 @@ npm start            # serves the API and the compiled frontend
 - **Run container**: `docker run --rm -p 4000:4000 --env-file .env phishing-campaign-simulator`
 - **Persistent data (volume)**: `docker run --rm -p 4000:4000 -v phishlab-data:/app/server/data --env-file .env phishing-campaign-simulator`
 - **Русский (кратко)**: Соберите образ (`docker build ...`), затем запустите контейнер (`docker run ...`), при необходимости подключив volume для папки `/app/server/data`, чтобы базы и настройки сохранялись между перезапусками.
-- Контейнер обслуживает API и статический фронтенд на `http://localhost:4000`.
+- Image serves API and static frontend on `http://localhost:4000`.
+> **Tip:** regenerate the Docker image after any code change; all dependen
 
 ### Scripts Summary
 | Script | Description |
@@ -142,6 +170,7 @@ Language preference is stored under `localStorage['phishlab-language']`.
 - `server/data/db.json` is the single source of truth; back it up before experimenting.
 - Run `npm run dev:full` during development so UI changes immediately reflect API mutations.
 - The project currently has no automated tests—consider adding Vitest/Jest and supertest for future reliability.
+- When updating features, keep documentation (README + `/src/documentation/*.md`) aligned with UI and API changes.
 
 ## License
 MIT — see [`LICENSE`](LICENSE) if present; otherwise apply the license that best suits your deployment.
