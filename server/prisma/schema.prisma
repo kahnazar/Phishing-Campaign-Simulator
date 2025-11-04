@@ -1,0 +1,228 @@
+// Prisma schema for Phishing Campaign Simulator backend
+// Defines core data models and relationships used across the application.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  VIEWER
+  AUDITOR
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  COMPLETED
+  CANCELLED
+}
+
+enum CampaignRecipientStatus {
+  PENDING
+  SCHEDULED
+  SENDING
+  SENT
+  OPENED
+  CLICKED
+  SUBMITTED
+  BOUNCED
+  COMPLAINED
+  FAILED
+}
+
+enum AuditActionType {
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  LOGOUT
+  CAMPAIGN_CREATED
+  CAMPAIGN_UPDATED
+  CAMPAIGN_LAUNCHED
+  CAMPAIGN_CANCELLED
+  TEMPLATE_CREATED
+  TEMPLATE_UPDATED
+  TEMPLATE_DELETED
+  SMTP_CONFIG_UPDATED
+  RECIPIENTS_IMPORTED
+  USER_INVITED
+  USER_ROLE_UPDATED
+  SECURITY_EVENT
+  OTHER
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String
+  role          UserRole       @default(VIEWER)
+  passwordHash  String
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  campaigns     Campaign[]     @relation("CampaignCreatedBy")
+  templates     Template[]     @relation("TemplateCreatedBy")
+  auditLogs     AuditLog[]
+  emailConfigs  EmailConfig[]
+  teamProfile   TeamMember?
+}
+
+model TeamMember {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  name           String
+  email          String    @unique
+  teamName       String?
+  role           UserRole  @default(VIEWER)
+  campaignCount  Int       @default(0)
+  lastActiveAt   DateTime?
+  lastActiveLabel String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  user           User      @relation(fields: [userId], references: [id])
+}
+
+model Template {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  category      String?
+  variant       String?
+  tags          String[]    @default([])
+  thumbnailUrl  String?
+  subject       String
+  previewText   String?
+  htmlContent   String?
+  textContent   String?
+  createdById   String?
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  createdBy     User?       @relation("TemplateCreatedBy", fields: [createdById], references: [id])
+  campaigns     Campaign[]
+}
+
+model Campaign {
+  id               String            @id @default(uuid())
+  name             String
+  description      String?
+  status           CampaignStatus    @default(DRAFT)
+  templateId       String?
+  createdById      String?
+  scheduledAt      DateTime?
+  launchedAt       DateTime?
+  completedAt      DateTime?
+  recipientsCount  Int               @default(0)
+  sentCount        Int               @default(0)
+  openedCount      Int               @default(0)
+  clickedCount     Int               @default(0)
+  submittedCount   Int               @default(0)
+  failureCount     Int               @default(0)
+  metadata         Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Relations
+  template         Template?         @relation(fields: [templateId], references: [id])
+  createdBy        User?             @relation("CampaignCreatedBy", fields: [createdById], references: [id])
+  recipients       CampaignRecipient[]
+  auditLogs        AuditLog[]
+}
+
+model Recipient {
+  id              String              @id @default(uuid())
+  email           String              @unique
+  name            String?
+  department      String?
+  position        String?
+  campaignCount   Int                 @default(0)
+  clickRate       Float               @default(0)
+  lastEngagedAt   DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // Relations
+  campaigns       CampaignRecipient[]
+}
+
+model CampaignRecipient {
+  id             String                   @id @default(uuid())
+  campaignId     String
+  recipientId    String
+  status         CampaignRecipientStatus  @default(PENDING)
+  scheduledFor   DateTime?
+  sentAt         DateTime?
+  openedAt       DateTime?
+  clickedAt      DateTime?
+  submittedAt    DateTime?
+  bouncedAt      DateTime?
+  complaintAt    DateTime?
+  failureReason  String?
+  token          String?                  @unique
+  metadata       Json?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  // Relations
+  campaign       Campaign                 @relation(fields: [campaignId], references: [id])
+  recipient      Recipient                @relation(fields: [recipientId], references: [id])
+
+  @@unique([campaignId, recipientId])
+  @@index([status])
+}
+
+model EmailConfig {
+  id                 String     @id @default(uuid())
+  userId             String?
+  host               String
+  port               Int        @default(587)
+  secure             Boolean    @default(false)
+  username           String?
+  password           String?
+  fromEmail          String?
+  fromName           String?
+  rateLimitPerMinute Int        @default(100)
+  lastVerifiedAt     DateTime?
+  metadata           Json?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  // Relations
+  owner              User?      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id           String          @id @default(uuid())
+  userId       String?
+  action       AuditActionType
+  resourceType String?
+  resourceId   String?
+  ipAddress    String?
+  userAgent    String?
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+  resourceCampaignId String?
+
+  // Relations
+  user         User?           @relation(fields: [userId], references: [id])
+  campaign     Campaign?       @relation(fields: [resourceCampaignId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([resourceCampaignId])
+}

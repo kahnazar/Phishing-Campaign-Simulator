@@ -3,6 +3,7 @@
       "version": "0.1.0",
       "private": true,
       "dependencies": {
+            "@prisma/client": "^6.18.0",
             "@radix-ui/react-accordion": "^1.2.3",
             "@radix-ui/react-alert-dialog": "^1.1.6",
             "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -41,6 +42,7 @@
             "lucide-react": "^0.487.0",
             "next-themes": "^0.4.6",
             "nodemailer": "^7.0.10",
+            "prisma": "^6.18.0",
             "react": "^18.3.1",
             "react-day-picker": "^8.10.1",
             "react-dnd": "*",
@@ -54,17 +56,27 @@
             "vaul": "^1.1.2"
       },
       "devDependencies": {
+            "@types/cors": "^2.8.19",
+            "@types/express": "^5.0.5",
             "@types/node": "^20.10.0",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "concurrently": "^9.1.2",
             "nodemon": "^3.1.7",
+            "tsx": "^4.20.6",
+            "typescript": "^5.9.3",
             "vite": "^6.4.1"
       },
       "scripts": {
             "dev": "vite",
             "build": "vite build",
-            "server": "nodemon --watch server server/index.js",
-            "start": "node server/index.js",
-            "dev:full": "concurrently \"npm run server\" \"npm run dev\""
+            "server": "tsx watch server/src/index.ts",
+            "server:start": "node server/dist/index.js",
+            "server:build": "tsc --project server/tsconfig.json",
+            "start": "concurrently \"npm run server\" \"npm run dev\"",
+            "prisma:generate": "prisma generate --schema server/prisma/schema.prisma",
+            "prisma:migrate": "prisma migrate dev --schema server/prisma/schema.prisma",
+            "prisma:deploy": "prisma migrate deploy --schema server/prisma/schema.prisma",
+            "migrate:legacy": "tsx server/scripts/migrate-json-to-postgres.ts",
+            "dev:full": "npm run start"
       }
 }
