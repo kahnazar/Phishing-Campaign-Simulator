@@ -116,7 +116,7 @@ export async function createEmailConfig(data: {
   return result.rows[0];
 }
 
-export async function updateEmailConfig(id: string, data: Partial<{
+async function updateEmailConfigById(id: string, data: Partial<{
   host: string;
   port: number;
   secure: boolean;
@@ -125,6 +125,7 @@ export async function updateEmailConfig(id: string, data: Partial<{
   fromEmail: string | null;
   fromName: string | null;
   rateLimitPerMinute: number;
+  useLocalSmtp?: boolean;
 }>): Promise<EmailConfig> {
   const updates: string[] = [];
   const values: any[] = [];
@@ -161,6 +162,10 @@ export async function updateEmailConfig(id: string, data: Partial<{
   if (data.rateLimitPerMinute !== undefined) {
     updates.push(`rate_limit_per_minute = $${paramCount++}`);
     values.push(data.rateLimitPerMinute);
+  }
+  if (data.useLocalSmtp !== undefined) {
+    updates.push(`use_local_smtp = $${paramCount++}`);
+    values.push(data.useLocalSmtp);
   }
 
   if (updates.length === 0) {
@@ -199,7 +204,7 @@ export async function upsertEmailConfig(data: {
   const existing = await findEmailConfig(data.userId ?? undefined);
   
   if (existing) {
-    return updateEmailConfig(existing.id, {
+    return updateEmailConfigById(existing.id, {
       host: data.host,
       port: data.port ?? existing.port,
       secure: data.secure ?? existing.secure,
@@ -263,26 +268,6 @@ export async function updateEmailConfig(update: UpdateEmailConfigInput, userId?:
   }
 }
 
-async function updateEmailConfigById(id: string, data: {
-  host: string;
-  port: number;
-  secure: boolean;
-  username: string | null;
-  password: string | null;
-  fromEmail: string | null;
-  fromName: string | null;
-  rateLimitPerMinute: number;
-  useLocalSmtp: boolean;
-}): Promise<EmailConfig> {
-  const result = await query<EmailConfig>(
-    `UPDATE email_configs 
-     SET host = $1, port = $2, secure = $3, username = $4, password = $5, from_email = $6, from_name = $7, rate_limit_per_minute = $8, use_local_smtp = $9
-     WHERE id = $10
-     RETURNING *`,
-    [data.host, data.port, data.secure, data.username, data.password, data.fromEmail, data.fromName, data.rateLimitPerMinute, data.useLocalSmtp, id]
-  );
-  return result.rows[0];
-}
 
 export function assembleEffectiveEmailConfig(stored?: EmailConfig | null): SanitizedEmailConfig {
   const {

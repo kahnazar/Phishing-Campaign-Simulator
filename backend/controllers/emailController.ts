@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireRole } from '../middleware/auth';
+import { authenticate, requireRole, type AuthenticatedRequest } from '../middleware/auth';
 import { sendTestEmail, getSmtpStatus, getEmailConfigForClient, updateEmailConfig } from '../services/emailService';
 import {
   startLocalSmtpServer,
@@ -18,7 +18,7 @@ emailRouter.use(authenticate);
 
 emailRouter.get('/status', requireRole('ADMIN'), async (_req, res, next) => {
   try {
-    const user = _req.user;
+    const user = (_req as AuthenticatedRequest).user;
     const status = await getSmtpStatus(user?.id);
     res.json(status);
   } catch (error) {
@@ -33,7 +33,7 @@ emailRouter.post('/test', requireRole('ADMIN'), async (req, res, next) => {
       return res.status(400).json({ message: 'Recipient email address (to) is required' });
     }
 
-    const user = req.user;
+    const user = (req as AuthenticatedRequest).user;
     const info = await sendTestEmail({ to, subject, message }, user?.id);
     res.json({
       messageId: info.messageId,
@@ -51,7 +51,7 @@ emailRouter.post('/test', requireRole('ADMIN'), async (req, res, next) => {
 
 emailRouter.get('/config', requireRole('ADMIN'), async (_req, res, next) => {
   try {
-    const user = _req.user;
+    const user = (_req as AuthenticatedRequest).user;
     const config = await getEmailConfigForClient(user?.id);
     res.json(config);
   } catch (error) {
@@ -62,7 +62,7 @@ emailRouter.get('/config', requireRole('ADMIN'), async (_req, res, next) => {
 emailRouter.put('/config', requireRole('ADMIN'), async (req, res, next) => {
   try {
     const { host, port, secure, user, pass, from, useLocalSmtp } = req.body || {};
-    const currentUser = req.user;
+    const currentUser = (req as AuthenticatedRequest).user;
     const updated = await updateEmailConfig(
       { host, port, secure, user, pass, from, useLocalSmtp },
       currentUser?.id,

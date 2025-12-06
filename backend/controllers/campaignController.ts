@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import type { AuthenticatedRequest } from '../middleware/auth';
 import { authenticate, requireRole } from '../middleware/auth';
 import { findAllCampaigns, createCampaign, updateCampaign, deleteCampaign } from '../services/campaignService';
+import { findTemplateById } from '../services/templateService';
 import { mapCampaign } from '../services/mappers';
 import type { CampaignStatus } from '../services/campaignService';
 
@@ -25,15 +27,13 @@ campaignRouter.post('/', requireRole('ADMIN', 'MANAGER'), async (req, res, next)
       return res.status(400).json({ message: 'name, templateId and recipientCount are required' });
     }
 
-    const template = await prisma.template.findUnique({
-      where: { id: templateId },
-    });
+    const template = await findTemplateById(templateId);
 
     if (!template) {
       return res.status(404).json({ message: 'Template not found' });
     }
 
-    const user = req.user;
+    const user = (req as AuthenticatedRequest).user;
     if (!user) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

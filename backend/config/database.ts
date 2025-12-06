@@ -3,8 +3,24 @@ import 'dotenv/config';
 
 const { Pool } = pg;
 
+// Поддержка отдельных переменных для Docker
+const getConnectionString = () => {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+  
+  // Fallback на отдельные переменные для docker-compose
+  const host = process.env.DB_HOST || 'localhost';
+  const port = process.env.DB_PORT || '5432';
+  const user = process.env.DB_USER || 'postgres';
+  const password = process.env.DB_PASSWORD || '';
+  const database = process.env.DB_NAME || 'phishlab';
+  
+  return `postgresql://${user}:${password}@${host}:${port}/${database}`;
+};
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: getConnectionString(),
   ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
 });
 
@@ -26,10 +42,15 @@ export async function query<T = any>(text: string, params?: any[]): Promise<pg.Q
   try {
     const res = await pool.query<T>(text, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: res.rowCount });
+    // Логируем только если запрос не слишком длинный
+    if (text.length < 200) {
+      console.log('Executed query', { text, duration, rows: res.rowCount });
+    } else {
+      console.log('Executed query', { text: text.substring(0, 100) + '...', duration, rows: res.rowCount });
+    }
     return res;
   } catch (error) {
-    console.error('Query error', { text, error });
+    console.error('Query error', { text: text.substring(0, 200), error });
     throw error;
   }
 }

@@ -49,22 +49,22 @@ export async function startLocalSmtpServer(port: number = 1025): Promise<void> {
     banner: 'PhishLab Local SMTP Server',
     authMethods: [], // Без аутентификации для локального использования
     disabledCommands: ['AUTH'], // Отключаем AUTH
-    onConnect(session, callback) {
+    onConnect(session: any, callback: (err?: Error) => void) {
       // Принимаем все подключения
       callback();
     },
-    onMailFrom(address, session, callback) {
+    onMailFrom(address: any, session: any, callback: (err?: Error) => void) {
       // Принимаем все отправители
       callback();
     },
-    onRcptTo(address, session, callback) {
+    onRcptTo(address: any, session: any, callback: (err?: Error) => void) {
       // Принимаем всех получателей
       callback();
     },
-    onData(stream, session, callback) {
+    onData(stream: any, session: any, callback: (err?: Error) => void) {
       let emailData = '';
 
-      stream.on('data', (chunk) => {
+      stream.on('data', (chunk: any) => {
         emailData += chunk.toString();
       });
 
@@ -108,7 +108,7 @@ export async function startLocalSmtpServer(port: number = 1025): Promise<void> {
 
           console.log(`[Local SMTP] Email saved: ${result.rows[0].id} from ${result.rows[0].from} to ${result.rows[0].to.join(', ')}`);
           callback();
-        } catch (error) {
+        } catch (error: any) {
           console.error('[Local SMTP] Error processing email:', error);
           callback(error as Error);
         }

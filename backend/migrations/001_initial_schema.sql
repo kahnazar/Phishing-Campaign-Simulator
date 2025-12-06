@@ -186,9 +186,14 @@ CREATE TRIGGER update_team_members_updated_at BEFORE UPDATE ON team_members
 CREATE TRIGGER update_email_configs_updated_at BEFORE UPDATE ON email_configs
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert default admin user (password: admin123)
--- Password hash for 'admin123' using scrypt
+-- Insert default admin user (password: PasswordStrong@!@)
+-- Password hash for 'PasswordStrong@!@' using scrypt
+-- This will be created/updated by init-db.ts script
+-- Hash: ff3f3f569538dc669774f9bafea76153:1797b8d18e263e18d1be675475db64b658ca1cb4d5d72aed40a69689eba739fa30af4710fab7888c35d711c09960949a1563f33293291bfc68ce6f2775c39252
 INSERT INTO users (id, email, name, role, password_hash) VALUES
-('00000000-0000-0000-0000-000000000001', 'admin@company.com', 'Alex Rivera', 'ADMIN', '1ea3c2df21ea67caddefca19ac8a3fd6:de74239e331c11bb4a24c4a4f1b226ad7f48fa401e42329064586d01f3a50b7711c3b6c8da38ebcc40ce49708b60a148faa0212d3a9e0d52852c470bca9fc3c5')
-ON CONFLICT (id) DO NOTHING;
+('00000000-0000-0000-0000-000000000001', 'admin@offbox.uz', 'Admin User', 'ADMIN', 'ff3f3f569538dc669774f9bafea76153:1797b8d18e263e18d1be675475db64b658ca1cb4d5d72aed40a69689eba739fa30af4710fab7888c35d711c09960949a1563f33293291bfc68ce6f2775c39252')
+ON CONFLICT (email) DO UPDATE SET 
+  password_hash = EXCLUDED.password_hash,
+  name = EXCLUDED.name,
+  role = EXCLUDED.role;
 

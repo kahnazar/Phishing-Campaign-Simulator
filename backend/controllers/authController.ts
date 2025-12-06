@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { AuthenticatedRequest } from '../middleware/auth';
 import { verifyPassword } from '../services/passwordService';
 import { createToken } from '../services/tokenService';
 import { authenticate } from '../middleware/auth';
@@ -38,7 +39,7 @@ authRouter.post('/login', async (req, res, next) => {
 });
 
 authRouter.get('/me', authenticate, (req, res) => {
-  return res.json(req.user);
+  return res.json((req as AuthenticatedRequest).user);
 });
 
 export default authRouter;

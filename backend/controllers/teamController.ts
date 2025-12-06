@@ -36,7 +36,7 @@ teamRouter.post('/', requireRole('ADMIN'), async (req, res, next) => {
       email
         .split('@')[0]
         .replace(/[._]/g, ' ')
-        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+        .replace(/\b\w/g, (letter: string) => letter.toUpperCase());
 
     // Check if user already exists
     let user = await findUserByEmail(email.toLowerCase());
