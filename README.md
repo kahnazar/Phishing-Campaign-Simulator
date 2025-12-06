@@ -28,12 +28,12 @@ The UI is inspired by the [original Figma design](https://www.figma.com/design/Q
 
 ## Tech Stack
 - **Frontend**: React 18, Vite, TypeScript, Radix UI primitives, Tailwind‑style utility classes.
-- **Backend**: Node.js (Express), CORS, JSON datastore (`server/data/db.json`).
+- **Backend**: Node.js (Express), PostgreSQL (native SQL), CORS.
 - **Supporting libs**: `sonner` for toasts, `react-dnd` for the email editor, `lucide-react` icons.
 
 ## Key Workflows
 1. **Configure SMTP**
-   - Fill in Settings → SMTP (UI stores values in `server/data/config.json`).
+   - Fill in Settings → SMTP (UI stores values in PostgreSQL database).
    - Environment variables override stored credentials; UI indicates overrides.
    - Send a test email and renew SSL (mock) directly from the panel.
 2. **Design Templates**
@@ -56,28 +56,43 @@ The UI is inspired by the [original Figma design](https://www.figma.com/design/Q
 npm install
 ```
 
+### Database Setup
+1. Create PostgreSQL database:
+```bash
+createdb phishlab
+```
+
+2. Run migrations:
+```bash
+export DATABASE_URL="postgresql://user:password@localhost:5432/phishlab"
+npm run migrate
+```
+
 ### Development
 Run UI and API together (recommended):
 ```bash
-npm run dev:full
+npm start
 ```
 - Vite dev server: http://localhost:3000 (proxies `/api` to the backend)
 - API server: http://localhost:4000
 
-Run only the backend (useful for production build verification):
+Run only the backend:
 ```bash
-npm run server
+npm run backend
 ```
 
 ### Production Build
 ```bash
-npm run build        # bundles the React app into /build
-npm start            # serves the API and the compiled frontend
+npm run build        # bundles the React app into frontend/build
+npm run backend:build # compiles TypeScript backend
+npm run backend:start # serves the API and the compiled frontend
 ```
 
 ### Environment Variables
 - Copy `.env.example` to `.env` and populate values for local development (`cp .env.example .env`).
 - Key variables:
+  - `DATABASE_URL` – PostgreSQL connection string (required): `postgresql://user:password@localhost:5432/phishlab`
+  - `DATABASE_SSL` – Set to `true` for SSL connections (default: `false`)
   - `PORT` – API + static bundle port (defaults to `4000` if unset).
   - `JWT_SECRET` – signing key for access tokens (always change from the sample value).
   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` – runtime email settings (see [Email Setup](src/documentation/EMAIL_SETUP.md) for full guidance).
@@ -87,14 +102,14 @@ npm start            # serves the API and the compiled frontend
 - Default admin credentials: `admin@company.com` / `admin123`.
 - Tokens are HMAC-signed using `JWT_SECRET` (defaults to `phishlab-dev-secret`). Override it when running the app: `JWT_SECRET=change-me npm start` or `docker run -e JWT_SECRET=change-me …`.
 - When using a `.env` file, set `JWT_SECRET` there before the first launch so the bundled `dotenv` loader can pick it up.
-- Rotate the admin password by replacing the `passwordHash` field for user `admin-1` in `server/data/db.json`. Generate a fresh hash with Node:
+- Rotate the admin password by updating the `password_hash` field in the `users` table. Generate a fresh hash with Node:
   ```bash
   node -e "const { randomBytes, scryptSync } = require('crypto'); const salt = randomBytes(16).toString('hex'); const hash = scryptSync('newStrongPassword', salt, 64).toString('hex'); console.log(`${salt}:${hash}`);"
   ```
 - Only administrators can invite, edit, or remove members in **Team & Roles**; other roles have read-only access.
 
 - **Рабочая SMTP-интеграция:** задействуется через Nodemailer; тестовое письмо можно отправить с вкладки Settings → SMTP.
-- **Хранение конфигурации:** значения из UI сохраняются в `server/data/config.json`; переменные окружения имеют приоритет и переопределяют файл.
+- **Хранение конфигурации:** значения из UI сохраняются в PostgreSQL базе данных; переменные окружения имеют приоритет и переопределяют сохраненные значения.
 - **Переменные окружения** (обязательные): `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`. Если требуется авторизация — добавьте `SMTP_USER` и `SMTP_PASS`. Опция `SMTP_SECURE=true` включает TLS. Заполните их в `.env` (или задайте на хостинге) и перезапустите сервер.
 - **API**: `GET /api/email/status` возвращает конфигурацию, `POST /api/email/test` (админ) отправляет тестовый email.
 - **Гайд по настройке:** см. [`src/documentation/EMAIL_SETUP.md`](src/documentation/EMAIL_SETUP.md) — включает чек-лист по безопасному хранению секретов и добавлению SMTP в докер.
@@ -104,8 +119,8 @@ npm start            # serves the API and the compiled frontend
 - Multi-stage image with dependency, build, and production targets (`Dockerfile`).
 - **Build image**: `docker build -t phishing-campaign-simulator .`
 - **Run container**: `docker run --rm -p 4000:4000 --env-file .env phishing-campaign-simulator`
-- **Persistent data (volume)**: `docker run --rm -p 4000:4000 -v phishlab-data:/app/server/data --env-file .env phishing-campaign-simulator`
-- **Русский (кратко)**: Соберите образ (`docker build ...`), затем запустите контейнер (`docker run ...`), при необходимости подключив volume для папки `/app/server/data`, чтобы базы и настройки сохранялись между перезапусками.
+- **Database connection**: Ensure `DATABASE_URL` is set in `.env` file or passed as environment variable.
+- **Русский (кратко)**: Соберите образ (`docker build ...`), затем запустите контейнер (`docker run ...`), убедитесь что `DATABASE_URL` настроен для подключения к PostgreSQL.
 - Image serves API and static frontend on `http://localhost:4000`.
 > **Tip:** regenerate the Docker image after any code change; all dependen
 
@@ -113,10 +128,12 @@ npm start            # serves the API and the compiled frontend
 | Script | Description |
 | ------ | ----------- |
 | `npm run dev` | Launch the Vite dev server without the backend. |
-| `npm run dev:full` | Start backend (`nodemon`) and frontend (`vite`) concurrently. |
-| `npm run server` | Start the Express API with hot-reload (`nodemon`). |
+| `npm start` | Start backend and frontend concurrently. |
+| `npm run backend` | Start the Express API with hot-reload (`tsx watch`). |
+| `npm run backend:build` | Compile TypeScript backend to JavaScript. |
+| `npm run backend:start` | Start compiled backend server. |
 | `npm run build` | Build the production-ready frontend. |
-| `npm start` | Serve API + static build via Express. |
+| `npm run migrate` | Run database migrations. |
 
 ## API Overview
 Base URL: `http://localhost:4000/api`
@@ -140,7 +157,7 @@ Base URL: `http://localhost:4000/api`
 | `GET`  | `/email/config` | Fetch persisted SMTP configuration (admin). |
 | `PUT`  | `/email/config` | Update persisted SMTP configuration (admin). |
 
-The backend persists data to `server/data/db.json`. Feel free to seed with real integrations or swap to a database when moving beyond prototyping.
+The backend uses PostgreSQL for data persistence. Run migrations to set up the database schema.
 
 ## Frontend Structure
 ```
@@ -166,9 +183,9 @@ Language preference is stored under `localStorage['phishlab-language']`.
 - [`src/documentation/EMAIL_SETUP.md`](src/documentation/EMAIL_SETUP.md) – SMTP настройка и безопасность.
 
 ## Contributing & Maintenance Tips
-- Keep backend routes in `server/index.js`. When adding new resources, mirror them in the API client and expose mutations via `AppDataContext`.
-- `server/data/db.json` is the single source of truth; back it up before experimenting.
-- Run `npm run dev:full` during development so UI changes immediately reflect API mutations.
+- Keep backend routes in `backend/index.ts`. When adding new resources, mirror them in the API client and expose mutations via `AppDataContext`.
+- Database schema is managed through SQL migrations in `backend/migrations/`.
+- Run `npm start` during development so UI changes immediately reflect API mutations.
 - The project currently has no automated tests—consider adding Vitest/Jest and supertest for future reliability.
 - When updating features, keep documentation (README + `/src/documentation/*.md`) aligned with UI and API changes.
 

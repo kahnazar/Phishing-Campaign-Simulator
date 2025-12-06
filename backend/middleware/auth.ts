@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { UserRole } from '@prisma/client';
+import type { UserRole } from '../services/userService';
 import { verifyToken } from '../services/tokenService';
 import { findUserById, sanitizeUser } from '../services/userService';
 
@@ -50,3 +50,4 @@ export function requireRole(...roles: (UserRole | '*')[]) {
     return next();
   };
 }
+

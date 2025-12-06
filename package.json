@@ -3,7 +3,7 @@
       "version": "0.1.0",
       "private": true,
       "dependencies": {
-            "@prisma/client": "^6.18.0",
+            "pg": "^8.11.3",
             "@radix-ui/react-accordion": "^1.2.3",
             "@radix-ui/react-alert-dialog": "^1.1.6",
             "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -42,7 +42,8 @@
             "lucide-react": "^0.487.0",
             "next-themes": "^0.4.6",
             "nodemailer": "^7.0.10",
-            "prisma": "^6.18.0",
+            "smtp-server": "^3.12.0",
+            "mailparser": "^3.6.5",
             "react": "^18.3.1",
             "react-day-picker": "^8.10.1",
             "react-dnd": "*",
@@ -59,6 +60,8 @@
             "@types/cors": "^2.8.19",
             "@types/express": "^5.0.5",
             "@types/node": "^20.10.0",
+            "@types/pg": "^8.10.9",
+            "@types/mailparser": "^3.4.4",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "concurrently": "^9.1.2",
             "nodemon": "^3.1.7",
@@ -67,16 +70,13 @@
             "vite": "^6.4.1"
       },
       "scripts": {
-            "dev": "vite",
-            "build": "vite build",
-            "server": "tsx watch server/src/index.ts",
-            "server:start": "node server/dist/index.js",
-            "server:build": "tsc --project server/tsconfig.json",
-            "start": "concurrently \"npm run server\" \"npm run dev\"",
-            "prisma:generate": "prisma generate --schema server/prisma/schema.prisma",
-            "prisma:migrate": "prisma migrate dev --schema server/prisma/schema.prisma",
-            "prisma:deploy": "prisma migrate deploy --schema server/prisma/schema.prisma",
-            "migrate:legacy": "tsx server/scripts/migrate-json-to-postgres.ts",
+            "dev": "cd frontend && vite",
+            "build": "cd frontend && vite build",
+            "backend": "tsx watch backend/index.ts",
+            "backend:build": "tsc --project backend/tsconfig.json",
+            "backend:start": "node backend/dist/index.js",
+            "start": "concurrently \"npm run backend\" \"npm run dev\"",
+            "migrate": "psql $DATABASE_URL -f backend/migrations/001_initial_schema.sql",
             "dev:full": "npm run start"
       }
 }

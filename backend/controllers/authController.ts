@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import prisma from '../config/database';
 import { verifyPassword } from '../services/passwordService';
 import { createToken } from '../services/tokenService';
 import { authenticate } from '../middleware/auth';
-import { findUserByEmail, sanitizeUser } from '../services/userService';
+import { findUserByEmail, sanitizeUser, updateUser } from '../services/userService';
 
 const authRouter = Router();
 
@@ -27,10 +26,7 @@ authRouter.post('/login', async (req, res, next) => {
       name: user.name,
     });
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
+    await updateUser(user.id, { lastLoginAt: new Date() });
 
     return res.json({
       token,
