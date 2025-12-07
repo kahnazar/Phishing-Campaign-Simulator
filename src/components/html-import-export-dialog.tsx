@@ -12,9 +12,9 @@ import { Textarea } from "./ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Label } from "./ui/label";
 import { ScrollArea } from "./ui/scroll-area";
-import { 
-  Code, 
-  Upload, 
+import {
+  Code,
+  Upload,
   Download,
   FileCode,
   Copy,
@@ -49,7 +49,7 @@ export function HtmlImportExportDialog({
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlCode, 'text/html');
       const parseError = doc.querySelector('parsererror');
-      
+
       if (parseError) {
         toast.error('Invalid HTML code');
         return;
@@ -100,7 +100,7 @@ export function HtmlImportExportDialog({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
     toast.success('HTML file downloaded');
   };
 
@@ -118,7 +118,7 @@ export function HtmlImportExportDialog({
       textArea.style.left = '-999999px';
       document.body.appendChild(textArea);
       textArea.select();
-      
+
       try {
         document.execCommand('copy');
         setCopied(true);
@@ -199,14 +199,16 @@ export function HtmlImportExportDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="html-code">HTML Code</Label>
-                <div className="rounded-lg border">
-                  <Textarea
-                    id="html-code"
-                    value={htmlCode}
-                    onChange={(e) => setHtmlCode(e.target.value)}
-                    placeholder="<html>&#10;  <head>&#10;    <title>Email Template</title>&#10;  </head>&#10;  <body>&#10;    <!-- Your email content -->&#10;  </body>&#10;</html>"
-                    className="h-[320px] w-full overflow-auto border-0 font-mono text-sm focus-visible:ring-0 resize-none min-h-0 md:h-[403px]"
-                  />
+                <div className="relative rounded-lg border bg-muted/30">
+                  <ScrollArea className="h-[300px]">
+                    <Textarea
+                      id="html-code"
+                      value={htmlCode}
+                      onChange={(e) => setHtmlCode(e.target.value)}
+                      placeholder="<html>&#10;  <head>&#10;    <title>Email Template</title>&#10;  </head>&#10;  <body>&#10;    <!-- Your email content -->&#10;  </body>&#10;</html>"
+                      className="min-h-[280px] w-full resize-none border-0 bg-transparent font-mono text-sm focus-visible:ring-0"
+                    />
+                  </ScrollArea>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Paste your complete HTML email template here
@@ -299,8 +301,8 @@ export function HtmlImportExportDialog({
 
               <div className="rounded-lg border bg-muted/50 p-4">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Note:</strong> The exported HTML includes all inline styles and is 
-                  ready to use in email campaigns. Make sure to test it in different email 
+                  <strong>Note:</strong> The exported HTML includes all inline styles and is
+                  ready to use in email campaigns. Make sure to test it in different email
                   clients before sending to ensure compatibility.
                 </p>
               </div>
