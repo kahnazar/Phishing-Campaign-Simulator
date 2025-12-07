@@ -17,7 +17,7 @@ import { startLocalSmtpServer } from './services/localSmtpServer';
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
 
-const BUILD_PATH = path.join(__dirname, '..', 'frontend', 'build');
+const BUILD_PATH = path.join(__dirname, '..', '..', 'frontend', 'build');
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
@@ -51,7 +51,7 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
 
 app.listen(PORT, async () => {
   console.log(`Server listening on http://localhost:${PORT}`);
-  
+
   // Проверяем, нужно ли запустить локальный SMTP сервер
   try {
     const stored = await getStoredEmailConfig();

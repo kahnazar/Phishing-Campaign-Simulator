@@ -17,7 +17,13 @@ export type SafeUser = Omit<User, 'passwordHash'>;
 
 export async function findUserByEmail(email: string): Promise<User | null> {
   const result = await query<User>(
-    'SELECT * FROM users WHERE LOWER(email) = LOWER($1)',
+    `SELECT 
+      id, email, name, role, 
+      password_hash as "passwordHash",
+      last_login_at as "lastLoginAt",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
+    FROM users WHERE LOWER(email) = LOWER($1)`,
     [email]
   );
   return result.rows[0] || null;
@@ -25,7 +31,13 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 
 export async function findUserById(id: string): Promise<User | null> {
   const result = await query<User>(
-    'SELECT * FROM users WHERE id = $1',
+    `SELECT 
+      id, email, name, role, 
+      password_hash as "passwordHash",
+      last_login_at as "lastLoginAt",
+      created_at as "createdAt",
+      updated_at as "updatedAt"
+    FROM users WHERE id = $1`,
     [id]
   );
   return result.rows[0] || null;
@@ -48,7 +60,12 @@ export async function createUser(data: {
   const result = await query<User>(
     `INSERT INTO users (email, name, role, password_hash)
      VALUES ($1, $2, $3, $4)
-     RETURNING *`,
+     RETURNING 
+       id, email, name, role,
+       password_hash as "passwordHash",
+       last_login_at as "lastLoginAt",
+       created_at as "createdAt",
+       updated_at as "updatedAt"`,
     [data.email.toLowerCase(), data.name, data.role, data.passwordHash]
   );
   return result.rows[0];
@@ -94,9 +111,14 @@ export async function updateUser(id: string, data: Partial<{
 
   values.push(id);
   const result = await query<User>(
-    `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING *`,
+    `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} 
+     RETURNING 
+       id, email, name, role,
+       password_hash as "passwordHash",
+       last_login_at as "lastLoginAt",
+       created_at as "createdAt",
+       updated_at as "updatedAt"`,
     values
   );
   return result.rows[0];
 }
-

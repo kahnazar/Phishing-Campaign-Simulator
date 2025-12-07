@@ -7,7 +7,7 @@ import { useAuth } from "../lib/auth-context";
 import { useTranslation } from "../lib/i18n";
 import { LanguageSelector } from "./language-selector";
 import { Shield, LogIn } from "lucide-react";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 export function LoginView() {
   const { login, authenticating, authError } = useAuth();
@@ -87,12 +87,12 @@ export function LoginView() {
                 {authenticating ? t.loginButtonLoading : t.loginButton}
               </Button>
             </form>
-
-            <p className="mt-4 text-xs text-muted-foreground">
-              {t.loginHelperText}
-            </p>
           </CardContent>
         </Card>
+
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Version 2.0 • Developed by Webforge LLC
+        </p>
       </div>
     </div>
   );
