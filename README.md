@@ -1,162 +1,189 @@
-# Phishing Campaign Simulator
+<p align="center">
+  <img src="https://img.icons8.com/color/128/cyber-security.png" alt="PhishLab Logo" width="100" />
+</p>
 
-A comprehensive full-stack training platform for planning, launching, and analyzing phishing simulation campaigns. Built with modern web technologies to help organizations improve their security awareness through realistic phishing simulations.
+<h1 align="center">Phishing Campaign Simulator</h1>
 
-## 🚀 Features
+<p align="center">
+  <strong>Enterprise-grade platform for security awareness training through realistic phishing simulations</strong>
+</p>
 
-### Dashboard & Analytics
-- **Consolidated KPIs** with real-time metrics
-- **Quick actions** to build or duplicate campaigns
-- **Performance tracking** across all campaigns
+<p align="center">
+  <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-→-blue?style=for-the-badge" alt="Quick Start" /></a>
+  <a href="#-features"><img src="https://img.shields.io/badge/Features-→-green?style=for-the-badge" alt="Features" /></a>
+  <a href="#-api-reference"><img src="https://img.shields.io/badge/API_Docs-→-orange?style=for-the-badge" alt="API Docs" /></a>
+  <a href="#-docker-deployment"><img src="https://img.shields.io/badge/Docker-→-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
+</p>
 
-### Template Management
-- **Drag-and-drop email editor** with content blocks
-- **HTML import/export** functionality
-- **Tag management** with merge tags for personalization
-- **Template library** with pre-built scenarios
+<p align="center">
+  <img src="https://img.shields.io/badge/version-2.0-blue?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/react-18-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React 18" />
+  <img src="https://img.shields.io/badge/node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/typescript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/postgresql-14+-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
+</p>
 
-### Campaign Builder
-- **Guided 4-step workflow** for campaign creation
-- **Template selection** from library
-- **Recipient targeting** with group management
-- **Scheduling options** for immediate or delayed launch
-- **Review and launch** with tracking settings
+---
 
-### Recipient Management
-- **CSV upload** with server-side parsing and validation
-- **Google Sheets integration** (public CSV export)
-- **Directory text parsing** for bulk import
-- **Advanced filtering** by department and risk level
-- **Search and inline editing** capabilities
-- **CSV export** of current view
+## 🎯 Overview
 
-### Reporting & Analytics
-- **Campaign performance table** with detailed metrics
-- **Detail modal** with comprehensive breakdown
-- **One-click CSV export** for analysis
-- **Engagement timeline** visualization
-- **Risk scoring** by department
+**Phishing Campaign Simulator** is a comprehensive full-stack training platform for **planning**, **launching**, and **analyzing** phishing simulation campaigns. Designed to help organizations improve their cybersecurity posture through realistic, controlled phishing simulations.
 
-### Team Management
-- **Role-based access control** (Admin/Manager/Viewer/Auditor)
-- **User invitation** and management
-- **Permission editing** and removal
-- **Activity tracking**
+> 🛡️ Train your team. Reduce risk. Build a security-first culture.
 
-### SMTP & Email Configuration
-- **Provider presets** (SendGrid, SES, Mailgun)
-- **Test email** functionality
-- **Status monitoring** and refresh
-- **Local SMTP server** for testing
-- **SSL configuration** support
+---
 
-### Internationalization
-- **Multi-language support**: English, Russian, and Uzbek
-- **Persistent language selection**
-- **Complete UI translation**
+## ✨ Features
 
-## 🛠 Tech Stack
+<table>
+<tr>
+<td width="50%">
 
-### Frontend
-- **React 18** - Modern UI framework
-- **TypeScript** - Type-safe development
-- **Vite** - Fast build tool and dev server
-- **Radix UI** - Accessible component primitives
-- **Tailwind CSS** - Utility-first styling
-- **Lucide React** - Beautiful icons
-- **Sonner** - Toast notifications
-- **React DnD** - Drag and drop functionality
+### 📊 Dashboard & Analytics
 
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express** - Web application framework
-- **PostgreSQL** - Relational database
-- **TypeScript** - Type-safe backend code
-- **JWT** - Secure authentication
-- **Nodemailer** - Email sending
-- **CORS** - Cross-origin resource sharing
+Real-time KPIs, performance tracking, and quick actions to build or duplicate campaigns at a glance.
 
-## 📋 Prerequisites
+</td>
+<td width="50%">
 
-- Node.js ≥ 18
-- npm ≥ 9
-- PostgreSQL ≥ 14
+### ✉️ Template Builder
 
-## 🚀 Getting Started
+Drag-and-drop email editor with HTML import/export, merge tags, and a pre-built template library.
 
-### Installation
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🚀 Campaign Builder
+
+Guided 4-step workflow: select template → target recipients → schedule delivery → review & launch.
+
+</td>
+<td width="50%">
+
+### 👥 Recipient Management
+
+CSV upload, Google Sheets integration, directory parsing, advanced filtering, inline editing & export.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📈 Reporting
+
+Campaign performance tables, engagement timelines, department risk scoring, and one-click CSV export.
+
+</td>
+<td width="50%">
+
+### 👤 Team & RBAC
+
+Role-based access (Admin / Manager / Viewer / Auditor), user invitations, and activity tracking.
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 📧 SMTP Configuration
+
+Provider presets (SendGrid, SES, Mailgun), test emails, status monitoring, and built-in local SMTP for testing.
+
+</td>
+<td width="50%">
+
+### 🌐 Internationalization
+
+Full multi-language support for **English**, **Russian**, and **Uzbek** with persistent language selection.
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Browser                          │
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                    React 18 + TypeScript                  │  │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │  │
+│  │  │Dashboard │  │Templates │  │Campaigns │  │ Reports  │ │  │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │  │
+│  │  Radix UI · Tailwind CSS · Recharts · React DnD          │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │ Vite Proxy                       │
+└──────────────────────────────┼──────────────────────────────────┘
+                               │ /api/*
+┌──────────────────────────────┼──────────────────────────────────┐
+│                        API Server                               │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │               Express + TypeScript + JWT                  │  │
+│  │  ┌────────────┐  ┌────────────┐  ┌─────────────────────┐ │  │
+│  │  │ Controllers│  │  Services  │  │     Middleware       │ │  │
+│  │  │ ─────────  │  │ ─────────  │  │ ─────────────────── │ │  │
+│  │  │ auth       │  │ campaign   │  │ JWT Authentication  │ │  │
+│  │  │ campaigns  │  │ email      │  │ CORS                │ │  │
+│  │  │ recipients │  │ recipient  │  │ Error Handling      │ │  │
+│  │  │ templates  │  │ template   │  └─────────────────────┘ │  │
+│  │  │ team       │  │ smtp       │                           │  │
+│  │  │ email      │  │ tracking   │                           │  │
+│  │  └────────────┘  └────────────┘                           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│                    ┌─────────┴─────────┐                        │
+│                    │   PostgreSQL 14+  │                         │
+│                    │   ─────────────── │                         │
+│                    │  users · campaigns│                         │
+│                    │  templates · smtp │                         │
+│                    │  recipients · team│                         │
+│                    └───────────────────┘                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚙️ Tech Stack
+
+| Layer        | Technologies                                                                                          |
+| :----------- | :---------------------------------------------------------------------------------------------------- |
+| **Frontend** | React 18 · TypeScript · Vite · Radix UI · Tailwind CSS · Recharts · Lucide Icons · React DnD · Sonner |
+| **Backend**  | Node.js · Express · TypeScript · JWT · Nodemailer · SMTP Server                                       |
+| **Database** | PostgreSQL 14+                                                                                        |
+| **DevOps**   | Docker · Docker Compose · Multi-stage builds · Concurrently                                           |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+| Requirement | Version |
+| :---------- | :------ |
+| Node.js     | ≥ 18    |
+| npm         | ≥ 9     |
+| PostgreSQL  | ≥ 14    |
+
+### 1. Clone & Install
 
 ```bash
+git clone https://github.com/your-org/phishing-campaign-simulator.git
+cd phishing-campaign-simulator
 npm install
 ```
 
-### Database Setup
-
-1. Create PostgreSQL database:
-```bash
-createdb phishlab
-```
-
-2. Run migrations:
-```bash
-export DATABASE_URL="postgresql://user:password@localhost:5432/phishlab"
-npm run migrate
-```
-
-### Development
-
-Run UI and API together (recommended):
-```bash
-npm start
-```
-- Vite dev server: http://localhost:3000 (proxies `/api` to backend)
-- API server: http://localhost:4000
-
-Run only the backend:
-```bash
-npm run backend
-```
-
-### Production Build
-
-```bash
-npm run build        # Build React app
-npm run backend:build # Compile TypeScript backend
-npm run backend:start # Start production server
-```
-
-## 🔐 Authentication
-
-### Default Credentials
-- **Email**: `admin@phishlab.uz`
-- **Password**: `GUBKAbob87@!@`
-
-> ⚠️ **Important**: Change the default password immediately after first login in production!
-
-### Security Configuration
-
-- Tokens are HMAC-signed using `JWT_SECRET`
-- Default secret: `phishlab-dev-secret` (change in production!)
-- Set via environment variable: `JWT_SECRET=your-secret-key npm start`
-
-### Password Reset
-
-Generate a new password hash:
-```bash
-node -e "const { randomBytes, scryptSync } = require('crypto'); const salt = randomBytes(16).toString('hex'); const hash = scryptSync('newPassword', salt, 64).toString('hex'); console.log(\`\${salt}:\${hash}\`);"
-```
-
-Update the `password_hash` field in the `users` table with the generated hash.
-
-## 🌍 Environment Variables
-
-Copy `.env.example` to `.env` and configure:
+### 2. Configure Environment
 
 ```bash
 cp .env.example .env
 ```
-
-### Required Variables
 
 ```env
 # Server
@@ -167,7 +194,7 @@ JWT_SECRET=change-me-in-production
 DATABASE_URL=postgresql://user:password@localhost:5432/phishlab
 DATABASE_SSL=false
 
-# SMTP (Optional - for email sending)
+# SMTP (Optional)
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -176,173 +203,248 @@ SMTP_PASS=your-password
 SMTP_FROM=noreply@example.com
 ```
 
-### SMTP Configuration
+### 3. Setup Database
 
-- **UI Storage**: SMTP settings are saved in PostgreSQL
-- **Environment Override**: Environment variables take precedence
-- **Test Functionality**: Send test emails from Settings → SMTP
-- **Local SMTP**: Built-in SMTP server for testing (port 1025)
+```bash
+createdb phishlab
+export DATABASE_URL="postgresql://user:password@localhost:5432/phishlab"
+npm run migrate
+```
 
-See [EMAIL_SETUP.md](src/documentation/EMAIL_SETUP.md) for detailed configuration.
+### 4. Launch
+
+```bash
+npm start
+```
+
+| Service     | URL                   |
+| :---------- | :-------------------- |
+| 🖥 Frontend | http://localhost:3000 |
+| 🔌 API      | http://localhost:4000 |
+
+> **Default credentials:** `admin@phishlab.uz` / `GUBKAbob87@!@`
+>
+> ⚠️ Change the default password immediately after first login in production!
+
+---
 
 ## 🐳 Docker Deployment
 
-### Quick Start
+### One-Command Launch
 
 ```bash
 docker-compose up -d
 ```
 
-The application will be available at http://localhost:4000
+The full application will be available at **http://localhost:4000**
 
-### Build Custom Image
+### Custom Image Build
 
 ```bash
 docker build -t phishing-campaign-simulator .
 docker run --rm -p 4000:4000 --env-file .env phishing-campaign-simulator
 ```
 
-### Docker Configuration
+### Docker Features
 
-- **Multi-stage build** for optimized image size
-- **PostgreSQL** included in docker-compose
-- **Automatic migrations** on container start
-- **Health checks** for database readiness
+| Feature              | Description                               |
+| :------------------- | :---------------------------------------- |
+| 📦 Multi-stage build | Optimized image size                      |
+| 🐘 PostgreSQL        | Included in `docker-compose.yml`          |
+| 🔄 Auto-migrations   | Database schema applied on start          |
+| 💓 Health checks     | Automatic database readiness verification |
 
-> 💡 **Tip**: Rebuild the image after code changes
+> 📖 See [DOCKER_SETUP.md](DOCKER_SETUP.md) for advanced configuration.
 
-## 📚 API Documentation
+---
 
-Base URL: `http://localhost:4000/api`
+## 📡 API Reference
 
-### Authentication
-- `POST /auth/login` - User login
-- `GET /auth/me` - Get current user
+**Base URL:** `http://localhost:4000/api`
 
-### Templates
-- `GET /templates` - List all templates
-- `GET /templates/:id` - Get single template
-- `POST /templates` - Create template
-- `PUT /templates/:id` - Update template
-- `DELETE /templates/:id` - Delete template
+<details>
+<summary><strong>🔐 Authentication</strong></summary>
 
-### Campaigns
-- `GET /campaigns` - List all campaigns
-- `POST /campaigns` - Create campaign
-- `PUT /campaigns/:id` - Update campaign
-- `DELETE /campaigns/:id` - Delete campaign
+| Method | Endpoint      | Description              |
+| :----- | :------------ | :----------------------- |
+| `POST` | `/auth/login` | User login               |
+| `GET`  | `/auth/me`    | Get current user profile |
 
-### Recipients
-- `GET /recipients` - List all recipients
-- `POST /recipients` - Create recipient
-- `POST /recipients/import/csv` - Import from CSV
-- `POST /recipients/import/google` - Import from Google Sheets
-- `POST /recipients/import/directory` - Import from directory
+</details>
 
-### Team
-- `GET /team` - List team members
-- `POST /team` - Invite member
-- `PUT /team/:id` - Update member
-- `DELETE /team/:id` - Remove member
+<details>
+<summary><strong>✉️ Templates</strong></summary>
 
-### Email
-- `GET /email/status` - Get SMTP status
-- `POST /email/test` - Send test email
-- `GET /email/config` - Get email configuration
-- `PUT /email/config` - Update email configuration
+| Method   | Endpoint         | Description         |
+| :------- | :--------------- | :------------------ |
+| `GET`    | `/templates`     | List all templates  |
+| `GET`    | `/templates/:id` | Get single template |
+| `POST`   | `/templates`     | Create template     |
+| `PUT`    | `/templates/:id` | Update template     |
+| `DELETE` | `/templates/:id` | Delete template     |
 
-For detailed API specifications, see [BACKEND_API.md](src/documentation/BACKEND_API.md)
+</details>
+
+<details>
+<summary><strong>🚀 Campaigns</strong></summary>
+
+| Method   | Endpoint         | Description        |
+| :------- | :--------------- | :----------------- |
+| `GET`    | `/campaigns`     | List all campaigns |
+| `POST`   | `/campaigns`     | Create campaign    |
+| `PUT`    | `/campaigns/:id` | Update campaign    |
+| `DELETE` | `/campaigns/:id` | Delete campaign    |
+
+</details>
+
+<details>
+<summary><strong>👥 Recipients</strong></summary>
+
+| Method | Endpoint                       | Description                |
+| :----- | :----------------------------- | :------------------------- |
+| `GET`  | `/recipients`                  | List all recipients        |
+| `POST` | `/recipients`                  | Create recipient           |
+| `POST` | `/recipients/import/csv`       | Import from CSV            |
+| `POST` | `/recipients/import/google`    | Import from Google Sheets  |
+| `POST` | `/recipients/import/directory` | Import from directory text |
+
+</details>
+
+<details>
+<summary><strong>👤 Team</strong></summary>
+
+| Method   | Endpoint    | Description        |
+| :------- | :---------- | :----------------- |
+| `GET`    | `/team`     | List team members  |
+| `POST`   | `/team`     | Invite member      |
+| `PUT`    | `/team/:id` | Update member role |
+| `DELETE` | `/team/:id` | Remove member      |
+
+</details>
+
+<details>
+<summary><strong>📧 Email / SMTP</strong></summary>
+
+| Method | Endpoint        | Description                |
+| :----- | :-------------- | :------------------------- |
+| `GET`  | `/email/status` | Get SMTP status            |
+| `POST` | `/email/test`   | Send test email            |
+| `GET`  | `/email/config` | Get email configuration    |
+| `PUT`  | `/email/config` | Update email configuration |
+
+</details>
+
+> 📖 Full specification: [BACKEND_API.md](src/documentation/BACKEND_API.md)
+
+---
 
 ## 📁 Project Structure
 
 ```
-.
-├── backend/              # Node.js/Express backend
-│   ├── config/          # Database configuration
-│   ├── controllers/     # API route handlers
-│   ├── middleware/      # Authentication middleware
-│   ├── migrations/      # SQL database migrations
-│   ├── scripts/         # Utility scripts
-│   └── services/        # Business logic
-├── src/                 # React frontend
-│   ├── components/      # React components
-│   ├── lib/            # Utilities, API client, contexts
-│   ├── styles/         # Global styles
-│   └── documentation/  # Additional docs
-├── docker-compose.yml   # Docker orchestration
-├── Dockerfile          # Multi-stage Docker build
-└── vite.config.ts      # Vite configuration
+phishing-campaign-simulator/
+│
+├── 📂 backend/                  # Node.js / Express API
+│   ├── config/                  # Database connection & pool
+│   ├── controllers/             # Route handlers (auth, campaigns, email...)
+│   ├── middleware/               # JWT authentication guard
+│   ├── migrations/               # SQL schema migrations
+│   ├── scripts/                  # Utility & seed scripts
+│   └── services/                 # Business logic layer
+│
+├── 📂 src/                      # React 18 Frontend
+│   ├── components/               # 60+ UI components
+│   ├── lib/                      # API client, contexts, translations, utils
+│   ├── styles/                   # Global stylesheets
+│   └── documentation/            # In-app documentation
+│
+├── 🐳 docker-compose.yml        # Full-stack orchestration
+├── 🐳 Dockerfile                # Multi-stage production build
+├── ⚡ vite.config.ts             # Vite dev server & proxy config
+└── 📦 package.json              # Scripts & dependencies
 ```
 
-## 🔧 Available Scripts
+---
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start Vite dev server only |
-| `npm start` | Start backend and frontend concurrently |
-| `npm run backend` | Start Express API with hot-reload |
-| `npm run backend:build` | Compile TypeScript backend |
-| `npm run backend:start` | Start compiled backend |
-| `npm run build` | Build production frontend |
-| `npm run migrate` | Run database migrations |
+## 📜 Available Scripts
+
+| Script                  | Description                              |
+| :---------------------- | :--------------------------------------- |
+| `npm start`             | 🚀 Start frontend + backend concurrently |
+| `npm run dev`           | ⚡ Vite dev server only                  |
+| `npm run backend`       | 🔌 Express API with hot-reload           |
+| `npm run build`         | 📦 Production frontend build             |
+| `npm run backend:build` | 🔨 Compile TypeScript backend            |
+| `npm run backend:start` | 🏃 Start compiled production server      |
+| `npm run migrate`       | 🗄️ Run database migrations               |
+
+---
 
 ## 🌐 Internationalization
 
-The application supports multiple languages:
-- English (en)
-- Russian (ru)
-- Uzbek (uz)
+| Language   | Code | Status      |
+| :--------- | :--- | :---------- |
+| 🇬🇧 English | `en` | ✅ Complete |
+| 🇷🇺 Russian | `ru` | ✅ Complete |
+| 🇺🇿 Uzbek   | `uz` | ✅ Complete |
 
-Language preference is stored in `localStorage['phishlab-language']` and persists across sessions.
+Language preference is stored in `localStorage['phishlab-language']` and persists across sessions. Translations are defined in `src/lib/translations.ts` and accessed via the `useTranslation()` hook.
 
-Translations are defined in `src/lib/translations.ts` and accessed via the `useTranslation()` hook.
+---
 
-## 📖 Documentation
+## 🔒 Security Checklist
 
-- [Product Overview](src/documentation/PRODUCT_OVERVIEW.md) - Architecture, roles, modules, deployment
-- [Backend API](src/documentation/BACKEND_API.md) - Detailed REST API specification
-- [Email Setup](src/documentation/EMAIL_SETUP.md) - SMTP configuration and security
-- [Docker Setup](DOCKER_SETUP.md) - Container deployment guide
-- [Local SMTP Guide](LOCAL_SMTP_GUIDE.md) - Testing email functionality
-- [Migration Guide](MIGRATION_GUIDE.md) - Database migration instructions
+> Best practices for production deployment:
+
+- [x] Change default admin password
+- [x] Use a strong, unique `JWT_SECRET`
+- [x] Enable SSL for database connections
+- [x] Store all secrets in environment variables
+- [x] Implement rate limiting
+- [x] Enable HTTPS in production
+- [x] Conduct regular security audits
+- [x] Keep dependencies up to date
+
+---
 
 ## 🤝 Contributing
 
 ### Development Workflow
 
-1. **Backend routes**: Add new routes in `backend/controllers/`
-2. **API client**: Mirror routes in `src/lib/api-client.ts`
-3. **State management**: Expose mutations via `AppDataContext`
-4. **Database changes**: Create migrations in `backend/migrations/`
-5. **Testing**: Run `npm start` to test changes immediately
+```mermaid
+graph LR
+    A[Add Route] --> B[Update API Client]
+    B --> C[Expose via Context]
+    C --> D[Build UI Component]
+    D --> E[Test & Document]
+```
 
-### Code Quality
-
-- Keep backend routes organized in controllers
-- Use TypeScript for type safety
-- Follow existing code patterns
-- Update documentation when adding features
-- Test thoroughly before committing
-
-## 🔒 Security Best Practices
-
-- ✅ Change default admin password
-- ✅ Use strong JWT_SECRET in production
-- ✅ Enable SSL for database connections
-- ✅ Use environment variables for secrets
-- ✅ Implement rate limiting (recommended)
-- ✅ Enable HTTPS in production
-- ✅ Regular security audits
-- ✅ Keep dependencies updated
-
-## 📝 License
-
-MIT License - see LICENSE file for details
-
-## 🆘 Support
-
-For issues, questions, or contributions, please open an issue on GitHub.
+| Step | Action               | Location                |
+| :--- | :------------------- | :---------------------- |
+| 1    | Add new route        | `backend/controllers/`  |
+| 2    | Mirror in API client | `src/lib/api-client.ts` |
+| 3    | Expose mutations     | `AppDataContext`        |
+| 4    | Database changes     | `backend/migrations/`   |
+| 5    | Test changes         | `npm start`             |
 
 ---
 
-**Version 2.0** • Developed by Webforge LLC
+## 📖 Documentation
+
+| Document                                                  | Description                              |
+| :-------------------------------------------------------- | :--------------------------------------- |
+| [Product Overview](src/documentation/PRODUCT_OVERVIEW.md) | Architecture, roles, modules, deployment |
+| [Backend API](src/documentation/BACKEND_API.md)           | Detailed REST API specification          |
+| [Email Setup](src/documentation/EMAIL_SETUP.md)           | SMTP configuration and security          |
+| [Docker Setup](DOCKER_SETUP.md)                           | Container deployment guide               |
+| [Local SMTP Guide](LOCAL_SMTP_GUIDE.md)                   | Testing email functionality              |
+| [Migration Guide](MIGRATION_GUIDE.md)                     | Database migration instructions          |
+
+---
+
+<p align="center">
+  <strong>Version 2.0</strong> · Developed by <strong>Webforge LLC</strong>
+</p>
+
+<p align="center">
+  <sub>MIT License · Made with ❤️ for a more secure world</sub>
+</p>
